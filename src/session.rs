@@ -11,6 +11,12 @@ pub struct Session {
     pub key: String,
 }
 
+#[derive(Deserialize)]
+pub(crate) struct CommonResponse {
+    pub code: Code,
+    pub msg: String,
+}
+
 impl Session {
     pub fn url(&self, path: &str) -> String {
         self.base_url.clone() + path
@@ -56,18 +62,12 @@ impl Session {
             qq: Target,
         }
 
-        #[derive(Deserialize)]
-        struct Response {
-            code: Code,
-            msg: String,
-        }
-
         let req = Request {
             session_key: self.key.clone(),
             qq,
         };
 
-        let result: Response = self.client.post(&self.url("/verify"))
+        let result: CommonResponse = self.client.post(&self.url("/verify"))
             .json(&req)
             .send()?
             .json()?;
@@ -83,18 +83,12 @@ impl Session {
             qq: Target,
         }
 
-        #[derive(Deserialize)]
-        struct Response {
-            code: Code,
-            msg: String,
-        }
-
         let req = Request {
             session_key: self.key.clone(),
             qq,
         };
 
-        let resp: Response = self.client.post(&self.url("/release"))
+        let resp: CommonResponse = self.client.post(&self.url("/release"))
             .json(&req)
             .send()?
             .json()?;

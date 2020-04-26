@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use serde::export::fmt::Debug;
 
 use super::{Target, Code};
-use super::session::Session;
+use super::session::{Session, CommonResponse};
 use super::error::{Result, assert, ImpossibleError};
 
 pub type MessageChain = Vec<SingleMessage>;
@@ -17,26 +17,26 @@ pub type MessageId = i64;
 ///
 /// ### Group
 ///
-/// Group message contains a message chain (`message_chain`) and a sender (`GroupSender`)
+/// Group message contains a message chain (`message_chain`) and a sender (`GroupMember`)
 ///
 /// ### Friend
 ///
-/// Friend message contains a message chain (`message_chain`) and a sender (`FriendSender`)
+/// Friend message contains a message chain (`message_chain`) and a sender (`FriendMember`)
 #[serde(tag = "type")]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub enum MessagePackage {
     #[serde(rename = "GroupMessage")]
     Group {
         #[serde(rename = "messageChain")]
         message_chain: MessageChain,
-        sender: GroupSender,
+        sender: GroupMember,
     },
 
     #[serde(rename = "FriendMessage")]
     Friend {
         #[serde(rename = "messageChain")]
         message_chain: MessageChain,
-        sender: FriendSender,
+        sender: FriendMember,
     },
 }
 
@@ -61,6 +61,17 @@ pub enum MessagePackage {
 /// * `sender_id`: sender id
 /// * `target_id`: the sender of quoted message
 /// * `origin`: the message chain of quoted message
+///
+/// ### At
+///
+/// * `target`: target member id
+/// * `display`
+///
+/// ### Image
+///
+/// * `image_id`: image id
+/// * `url`:
+/// * `path`:
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum SingleMessage {
@@ -85,9 +96,33 @@ pub enum SingleMessage {
         target: Target,
         display: String,
     },
+    Image {
+        #[serde(rename = "imageId")]
+        image_id: String,
+        url: Option<String>,
+        path: Option<String>,
+    },
+    FlashImage {
+        #[serde(rename = "imageId")]
+        image_id: String,
+        url: Option<String>,
+        path: Option<String>,
+    },
+    Xml {
+        xml: String
+    },
+    Json {
+        json: String
+    },
+    App {
+        content: String
+    },
+    Poke {
+        name: String
+    }
 }
 
-/// # GroupSender
+/// # GroupMember
 ///
 /// This struct can get from `MessagePackage::Group`
 ///
@@ -96,8 +131,8 @@ pub enum SingleMessage {
 /// * `id`: the id of sender
 /// * `member_name`: sender's name
 /// * `permission`: the sender permission in this group
-#[derive(Debug, Deserialize)]
-pub struct GroupSender {
+#[derive(Debug, Clone, Deserialize)]
+pub struct GroupMember {
     pub id: Target,
     #[serde(rename = "memberName")]
     pub member_name: String,
@@ -105,8 +140,8 @@ pub struct GroupSender {
     pub group: Group,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct FriendSender {
+#[derive(Debug, Clone, Deserialize)]
+pub struct FriendMember {
     pub id: Target,
     #[serde(rename = "nickname")]
     pub nick_name: String,
@@ -115,14 +150,14 @@ pub struct FriendSender {
 
 /// # Group
 ///
-/// This struct can get from `GroupSender`,
+/// This struct can get from `GroupMember`
 ///
 /// ## Attribute
 ///
 /// * `id`: the group id
 /// * `name`: the group name
 /// * `permission`: bot permission in this group
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Group {
     pub id: Target,
     pub name: String,
@@ -146,6 +181,7 @@ impl Message {
     }
 }
 
+/// send message
 impl Session {
     fn send_message(&self, message_type: &str, message: Message) -> Result<u64> {
         #[derive(Serialize)]
@@ -194,6 +230,7 @@ impl Session {
     }
 }
 
+/// receive message
 impl Session {
     fn get_message(&self, is_fetch: bool, is_newest: bool, count: usize) -> Result<Vec<MessagePackage>> {
         #[derive(Deserialize)]
@@ -231,5 +268,29 @@ impl Session {
 
     pub fn peek_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
         self.get_message(false, false, count)
+    }
+}
+
+/// Others
+impl Session {
+    pub fn recall(&self, message_id: MessageId) -> Result<()> {
+        #[derive(Serialize)]
+        struct Request {
+            #[serde(rename = "sessionKey")]
+            session_key: String,
+            target: MessageId,
+        }
+
+        let req = Request {
+            session_key: self.key.clone(),
+            target: message_id,
+        };
+
+        let resp: CommonResponse = self.client.post(&self.url("/recall"))
+            .json(&req)
+            .send()?
+            .json()?;
+
+        assert(resp.code, "Recall")
     }
 }
