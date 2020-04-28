@@ -11,7 +11,7 @@ pub type MessageId = i64;
 /// # MessagePackage
 ///
 /// `MessagePackage` will be returned from `Session::get_message`.
-/// It contains the message which the bot received.
+/// It contains messages (or events) which the bot received.
 ///
 /// ## Variants
 ///
@@ -25,19 +25,23 @@ pub type MessageId = i64;
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize)]
 pub enum MessagePackage {
+    /// Message
     #[serde(rename = "GroupMessage")]
-    Group {
+    GroupMessage {
         #[serde(rename = "messageChain")]
         message_chain: MessageChain,
         sender: GroupMember,
     },
 
     #[serde(rename = "FriendMessage")]
-    Friend {
+    FriendMessage {
         #[serde(rename = "messageChain")]
         message_chain: MessageChain,
         sender: FriendMember,
     },
+
+    #[serde(other)]
+    Unknown
 }
 
 /// # SingleMessage
@@ -183,7 +187,7 @@ impl Message {
 
 /// send message
 impl Session {
-    fn send_message(&self, message_type: &str, message: Message) -> Result<u64> {
+    async fn send_message(&self, message_type: &str, message: Message) -> Result<u64> {
         #[derive(Serialize)]
         struct SendMessageRequest {
             #[serde(rename = "sessionKey")]
@@ -196,7 +200,7 @@ impl Session {
         #[derive(Deserialize)]
         struct SendMessageResponse {
             code: Code,
-            msg: String,
+            //            msg: String,
             #[serde(rename = "messageId")]
             message_id: Option<u64>,
         }
@@ -209,30 +213,32 @@ impl Session {
 
         let resp: SendMessageResponse = self.client.post(&self.url(&format!("/send{}Message", message_type)))
             .json(&req)
-            .send()?
-            .json()?;
+            .send()
+            .await?
+            .json()
+            .await?;
 
         assert(resp.code, "Sending")?;
 
         resp.message_id.ok_or(ImpossibleError("messageId is None".to_string()))
     }
 
-    pub fn send_group_message(&self, message: Message) -> Result<u64> {
-        self.send_message("Group", message)
+    pub async fn send_group_message(&self, message: Message) -> Result<u64> {
+        self.send_message("Group", message).await
     }
 
-    pub fn send_friend_message(&self, message: Message) -> Result<u64> {
-        self.send_message("Friend", message)
+    pub async fn send_friend_message(&self, message: Message) -> Result<u64> {
+        self.send_message("Friend", message).await
     }
 
-    pub fn send_temp_message(&self, message: Message) -> Result<u64> {
-        self.send_message("Temp", message)
+    pub async fn send_temp_message(&self, message: Message) -> Result<u64> {
+        self.send_message("Temp", message).await
     }
 }
 
 /// receive message
 impl Session {
-    fn get_message(&self, is_fetch: bool, is_newest: bool, count: usize) -> Result<Vec<MessagePackage>> {
+    async fn get_message(&self, is_fetch: bool, is_newest: bool, count: usize) -> Result<Vec<MessagePackage>> {
         #[derive(Deserialize)]
         struct GetMessageResponse {
             code: Code,
@@ -246,34 +252,36 @@ impl Session {
                           count = count);
 
         let response: GetMessageResponse = self.client.get(&self.url(&url))
-            .send()?
-            .json()?;
+            .send()
+            .await?
+            .json()
+            .await?;
 
         assert(response.code, if is_fetch { "Fetching" } else { "Peeking" })?;
 
         Ok(response.data)
     }
 
-    pub fn fetch_newest_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
-        self.get_message(true, true, count)
+    pub async fn fetch_newest_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
+        self.get_message(true, true, count).await
     }
 
-    pub fn fetch_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
-        self.get_message(true, false, count)
+    pub async fn fetch_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
+        self.get_message(true, false, count).await
     }
 
-    pub fn peek_newest_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
-        self.get_message(false, true, count)
+    pub async fn peek_newest_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
+        self.get_message(false, true, count).await
     }
 
-    pub fn peek_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
-        self.get_message(false, false, count)
+    pub async fn peek_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
+        self.get_message(false, false, count).await
     }
 }
 
 /// Others
 impl Session {
-    pub fn recall(&self, message_id: MessageId) -> Result<()> {
+    pub async fn recall(&self, message_id: MessageId) -> Result<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -288,8 +296,10 @@ impl Session {
 
         let resp: CommonResponse = self.client.post(&self.url("/recall"))
             .json(&req)
-            .send()?
-            .json()?;
+            .send()
+            .await?
+            .json()
+            .await?;
 
         assert(resp.code, "Recall")
     }

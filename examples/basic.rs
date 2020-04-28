@@ -5,7 +5,8 @@ use std::io::stdin;
 use std::thread;
 use std::sync::{mpsc, Arc};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut auth_key = String::new();
     let mut id = String::new();
 
@@ -15,8 +16,8 @@ fn main() {
     println!("Please input qq id: ");
     stdin().read_line(&mut id).expect("input error");
 
-    let session = Session::auth("http://localhost:8080", auth_key.trim()).unwrap();
-    session.verify(id.trim().parse().expect("wrong qq id format")).unwrap();
+    let session = Session::auth("http://localhost:8080", auth_key.trim()).await.unwrap();
+    session.verify(id.trim().parse().expect("wrong qq id format")).await.unwrap();
 
     println!("Done: {:?}", session);
 
@@ -24,9 +25,9 @@ fn main() {
     let session = Arc::new(session);
     let ses = session.clone();
 
-    let _job = thread::spawn(move || {
+    let _job = tokio::spawn(async move {
         loop {
-            let mps = ses.fetch_newest_message(1);
+            let mps = ses.fetch_newest_message(1).await;
 
             match mps {
                 Ok(mps) => {
@@ -41,11 +42,11 @@ fn main() {
         }
     });
 
-    println!("{:?}", session.friend_list());
-    println!("{:?}", session.group_list());
+    println!("{:?}", session.friend_list().await);
+    println!("{:?}", session.group_list().await);
 
     for mp in rc.iter() {
-        if let MessagePackage::Group {
+        if let MessagePackage::GroupMessage {
             message_chain,
             sender
         } = &mp {
@@ -61,7 +62,7 @@ fn main() {
                 session.send_group_message(Message::new(
                     sender.group.id,
                     &vec![SingleMessage::Plain { text: String::from("Hi!") }])
-                ).unwrap();
+                ).await.unwrap();
             }
         }
 

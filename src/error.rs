@@ -10,7 +10,7 @@ pub type Result<T> = std::result::Result<T, MiraiError>;
 
 #[derive(Debug)]
 pub enum MiraiError {
-    CodeError(u16, String),
+    CodeError(Code, String),
     ImpossibleError(String),
     HttpError(ReqError),
 }

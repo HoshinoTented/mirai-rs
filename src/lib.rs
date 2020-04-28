@@ -5,8 +5,3 @@ pub mod member_list;
 
 pub type Target = u64;
 pub type Code = u16;
-
-#[cfg(test)]
-mod tests {
-
-}

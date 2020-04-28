@@ -1,4 +1,4 @@
-use reqwest::blocking::Client;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use super::error::{Result, ImpossibleError, assert};
@@ -22,7 +22,7 @@ impl Session {
         self.base_url.clone() + path
     }
 
-    pub fn auth(base_url: &str, auth_key: &str) -> Result<Session> {
+    pub async fn auth(base_url: &str, auth_key: &str) -> Result<Session> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "authKey")]
@@ -42,8 +42,10 @@ impl Session {
 
         let result: Response = client.post(&format!("{}/auth", base_url))
             .json(&req)
-            .send()?
-            .json()?;
+            .send()
+            .await?
+            .json()
+            .await?;
 
         assert(result.code, "Auth")?;
 
@@ -54,7 +56,7 @@ impl Session {
         })
     }
 
-    pub fn verify(&self, qq: Target) -> Result<()> {
+    pub async fn verify(&self, qq: Target) -> Result<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -69,13 +71,15 @@ impl Session {
 
         let result: CommonResponse = self.client.post(&self.url("/verify"))
             .json(&req)
-            .send()?
-            .json()?;
+            .send()
+            .await?
+            .json()
+            .await?;
 
         assert(result.code, "Verify")
     }
 
-    pub fn release(&self, qq: Target) -> Result<()> {
+    pub async fn release(&self, qq: Target) -> Result<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -90,8 +94,10 @@ impl Session {
 
         let resp: CommonResponse = self.client.post(&self.url("/release"))
             .json(&req)
-            .send()?
-            .json()?;
+            .send()
+            .await?
+            .json()
+            .await?;
 
         assert(resp.code, "Release")
     }
