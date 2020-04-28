@@ -15,33 +15,57 @@ pub type MessageId = i64;
 ///
 /// ## Variants
 ///
-/// ### Group
+/// ### GroupMessage
 ///
-/// Group message contains a message chain (`message_chain`) and a sender (`GroupMember`)
+/// it contains a message chain (`message_chain`) and a sender (`GroupMember`)
 ///
-/// ### Friend
+/// ### FriendMessage
 ///
-/// Friend message contains a message chain (`message_chain`) and a sender (`FriendMember`)
+/// it contains a message chain (`message_chain`) and a sender (`FriendMember`)
+///
+/// ### GroupRecallEvent
+///
+/// it means `operator` recall a group message (`message_id`) which `author_id` sent
+///
+/// ### FriendRecallEvent
+///
+/// the same as above
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize)]
 pub enum MessagePackage {
-    /// Message
-    #[serde(rename = "GroupMessage")]
     GroupMessage {
         #[serde(rename = "messageChain")]
         message_chain: MessageChain,
         sender: GroupMember,
     },
 
-    #[serde(rename = "FriendMessage")]
     FriendMessage {
         #[serde(rename = "messageChain")]
         message_chain: MessageChain,
         sender: FriendMember,
     },
 
+    GroupRecallEvent {
+        #[serde(rename = "authorId")]
+        author_id: Target,
+        #[serde(rename = "messageId")]
+        message_id: MessageId,
+        time: u64,
+        group: Group,
+        operator: GroupMember,
+    },
+
+    FriendRecallEvent {
+        #[serde(rename = "authorId")]
+        author_id: Target,
+        #[serde(rename = "messageId")]
+        message_id: MessageId,
+        time: u64,
+        operator: Target,
+    },
+
     #[serde(other)]
-    Unknown
+    Unsupported
 }
 
 /// # SingleMessage
@@ -212,11 +236,8 @@ impl Session {
         };
 
         let resp: SendMessageResponse = self.client.post(&self.url(&format!("/send{}Message", message_type)))
-            .json(&req)
-            .send()
-            .await?
-            .json()
-            .await?;
+            .json(&req).send().await?
+            .json().await?;
 
         assert(resp.code, "Sending")?;
 
@@ -252,10 +273,8 @@ impl Session {
                           count = count);
 
         let response: GetMessageResponse = self.client.get(&self.url(&url))
-            .send()
-            .await?
-            .json()
-            .await?;
+            .send().await?
+            .json().await?;
 
         assert(response.code, if is_fetch { "Fetching" } else { "Peeking" })?;
 
@@ -295,11 +314,8 @@ impl Session {
         };
 
         let resp: CommonResponse = self.client.post(&self.url("/recall"))
-            .json(&req)
-            .send()
-            .await?
-            .json()
-            .await?;
+            .json(&req).send().await?
+            .json().await?;
 
         assert(resp.code, "Recall")
     }
