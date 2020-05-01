@@ -3,7 +3,7 @@ use mirai_rs::message::{MessagePackage, SingleMessage, Message, Permission};
 
 use std::io::stdin;
 use std::sync::{mpsc, Arc};
-use tokio::time::Duration;
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() {

@@ -160,7 +160,10 @@ pub enum SingleMessage {
     },
     Poke {
         name: String
-    }
+    },
+
+    #[serde(other)]
+    Unsupported
 }
 
 /// # GroupMember
