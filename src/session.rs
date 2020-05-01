@@ -1,8 +1,8 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-use super::error::{Result, ImpossibleError, assert};
-use super::{Code, Target};
+use crate::error::{Result, ImpossibleError, assert};
+use crate::{Code, Target};
 
 #[derive(Debug)]
 pub struct Session {
@@ -41,11 +41,8 @@ impl Session {
         };
 
         let result: Response = client.post(&format!("{}/auth", base_url))
-            .json(&req)
-            .send()
-            .await?
-            .json()
-            .await?;
+            .json(&req).send().await?
+            .json().await?;
 
         assert(result.code, "Auth")?;
 
@@ -70,11 +67,8 @@ impl Session {
         };
 
         let result: CommonResponse = self.client.post(&self.url("/verify"))
-            .json(&req)
-            .send()
-            .await?
-            .json()
-            .await?;
+            .json(&req).send().await?
+            .json().await?;
 
         assert(result.code, "Verify")
     }
@@ -93,11 +87,8 @@ impl Session {
         };
 
         let resp: CommonResponse = self.client.post(&self.url("/release"))
-            .json(&req)
-            .send()
-            .await?
-            .json()
-            .await?;
+            .json(&req).send().await?
+            .json().await?;
 
         assert(resp.code, "Release")
     }

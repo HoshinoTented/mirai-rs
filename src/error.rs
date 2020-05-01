@@ -1,6 +1,6 @@
 use reqwest::Error as ReqError;
 use std::fmt::Formatter;
-use super::Code;
+use crate::Code;
 
 pub use MiraiError::CodeError;
 pub use MiraiError::HttpError;

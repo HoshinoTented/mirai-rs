@@ -2,8 +2,8 @@ use mirai_rs::session::Session;
 use mirai_rs::message::{MessagePackage, SingleMessage, Message};
 
 use std::io::stdin;
-use std::thread;
 use std::sync::{mpsc, Arc};
+use tokio::time::Duration;
 
 #[tokio::main]
 async fn main() {
@@ -23,24 +23,26 @@ async fn main() {
 
     let (sc, rc) = mpsc::channel();
     let session = Arc::new(session);
-    let ses = session.clone();
 
-    let _job = tokio::spawn(async move {
-        loop {
-            let mps = ses.fetch_newest_message(1).await;
+    {
+        let session = session.clone();
+        let _job = tokio::spawn(async move {
+            loop {
+                let mps = session.fetch_newest_message(1).await;
 
-            match mps {
-                Ok(mps) => {
-                    let first = mps.get(0);
-                    if let Some(mp) = first {
-                        sc.send(mp.clone()).unwrap();
+                match mps {
+                    Ok(mps) => {
+                        let first = mps.get(0);
+                        if let Some(mp) = first {
+                            sc.send(mp.clone()).unwrap();
+                        }
                     }
-                }
 
-                Err(e) => println!("{:?}", e)
+                    Err(e) => println!("{:?}", e)
+                }
             }
-        }
-    });
+        });
+    }
 
     println!("{:?}", session.friend_list().await);
     println!("{:?}", session.group_list().await);
@@ -58,12 +60,34 @@ async fn main() {
                 }
             });
 
-            if msg == "Hello" {
-                session.send_group_message(Message::new(
-                    sender.group.id,
-                    &vec![SingleMessage::Plain { text: String::from("Hi!") }])
-                ).await.unwrap();
-            }
+            match msg.trim() {
+                "Hello" => {
+                    session.send_group_message(Message::new(
+                        sender.group.id,
+                        &vec![SingleMessage::Image { image_id: None, url: None, path: Some("nya.png".to_string()) }])
+                    ).await.unwrap();
+                }
+
+                "mute me" => {
+                    if sender.group.permission == "ADMINISTRATOR" {
+                        session.mute(sender.group.id, sender.id, 60 * 10).await.unwrap();
+
+                        {
+                            let session = session.clone();
+                            let sender = sender.clone();
+                            tokio::spawn(async move {
+                                std::thread::sleep(Duration::from_secs(10));
+                                session.unmute(sender.group.id, sender.id).await.unwrap();
+                            });
+                        }
+                    } else {
+                        session.send_group_message(
+                            Message::new(sender.group.id, &vec!["I have not enough permission QAQ.".into()])
+                        ).await.unwrap();
+                    }
+                }
+                _ => {}
+            };
         }
 
         println!("{:?}", mp);

@@ -1,6 +1,6 @@
-use super::session::Session;
-use super::message::{Group, GroupMember, FriendMember};
-use super::error::{Result};
+use crate::session::Session;
+use crate::message::{Group, GroupMember, FriendMember};
+use crate::error::{Result};
 use serde::de::DeserializeOwned;
 
 impl Session {

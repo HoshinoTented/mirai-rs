@@ -1,12 +1,13 @@
 use serde::{Serialize, Deserialize};
 use serde::export::fmt::Debug;
 
-use super::{Target, Code};
-use super::session::{Session, CommonResponse};
-use super::error::{Result, assert, ImpossibleError};
+use crate::{Target, Code};
+use crate::session::Session;
+use crate::error::{Result, assert, ImpossibleError};
 
 pub type MessageChain = Vec<SingleMessage>;
 pub type MessageId = i64;
+pub type TimeStamp = u64;
 
 /// # MessagePackage
 ///
@@ -50,7 +51,7 @@ pub enum MessagePackage {
         author_id: Target,
         #[serde(rename = "messageId")]
         message_id: MessageId,
-        time: u64,
+        time: TimeStamp,
         group: Group,
         operator: GroupMember,
     },
@@ -108,7 +109,7 @@ pub enum SingleMessage {
     },
     Source {
         id: MessageId,
-        time: u64,
+        time: TimeStamp,
     },
     Quote {
         id: MessageId,
@@ -126,7 +127,7 @@ pub enum SingleMessage {
     },
     Image {
         #[serde(rename = "imageId")]
-        image_id: String,
+        image_id: Option<String>,
         url: Option<String>,
         path: Option<String>,
     },
@@ -298,25 +299,16 @@ impl Session {
     }
 }
 
-/// Others
-impl Session {
-    pub async fn recall(&self, message_id: MessageId) -> Result<()> {
-        #[derive(Serialize)]
-        struct Request {
-            #[serde(rename = "sessionKey")]
-            session_key: String,
-            target: MessageId,
+impl From<String> for SingleMessage {
+    fn from(str: String) -> Self {
+        SingleMessage::Plain {
+            text: str
         }
+    }
+}
 
-        let req = Request {
-            session_key: self.key.clone(),
-            target: message_id,
-        };
-
-        let resp: CommonResponse = self.client.post(&self.url("/recall"))
-            .json(&req).send().await?
-            .json().await?;
-
-        assert(resp.code, "Recall")
+impl From<&str> for SingleMessage {
+    fn from(str: &str) -> Self {
+        SingleMessage::from(str.to_string())
     }
 }
