@@ -9,6 +9,9 @@ pub type MessageChain = Vec<SingleMessage>;
 pub type MessageId = i64;
 pub type TimeStamp = u64;
 
+/// # Permission
+///
+/// Permission enum structure, this can be found in `GroupMember` and `Group`.
 #[derive(Deserialize, Debug, Clone)]
 pub enum Permission {
     #[serde(rename = "ADMINISTRATOR")]
@@ -127,13 +130,13 @@ pub enum MessagePackage {
 ///
 /// ## Variants
 ///
+/// ### Source
+///
+/// `Source` variant contains message id and timestamp.
+///
 /// ### Plain
 ///
 /// `Plain` text message, no special.
-///
-/// ### Source
-///
-/// `Source` variant contains message id and timestamp
 ///
 /// ### Quote
 ///
@@ -176,12 +179,12 @@ pub enum MessagePackage {
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum SingleMessage {
-    Plain {
-        text: String
-    },
     Source {
         id: MessageId,
         time: TimeStamp,
+    },
+    Plain {
+        text: String
     },
     Quote {
         id: MessageId,
@@ -234,7 +237,7 @@ pub enum SingleMessage {
 ///
 /// * `id`: the id of sender
 /// * `member_name`: sender's name
-/// * `permission`: the sender permission in this group
+/// * `permission`: sender's permission in this group
 #[derive(Debug, Clone, Deserialize)]
 pub struct GroupMember {
     pub id: Target,
@@ -260,7 +263,7 @@ pub struct FriendMember {
 ///
 /// * `id`: the group id
 /// * `name`: the group name
-/// * `permission`: bot permission in this group
+/// * `permission`: bot's permission in this group
 #[derive(Debug, Clone, Deserialize)]
 pub struct Group {
     pub id: Target,
