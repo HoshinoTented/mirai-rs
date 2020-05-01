@@ -5,4 +5,6 @@ jobs:
       - image: circleci/rust:latest
     steps:
       - checkout
-      - run: cargo build
+      - run:
+          name: Building
+          coommand: cargo build
