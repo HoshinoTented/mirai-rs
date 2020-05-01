@@ -1,5 +1,5 @@
 use mirai_rs::session::Session;
-use mirai_rs::message::{MessagePackage, SingleMessage, Message};
+use mirai_rs::message::{MessagePackage, SingleMessage, Message, Permission};
 
 use std::io::stdin;
 use std::sync::{mpsc, Arc};
@@ -69,7 +69,7 @@ async fn main() {
                 }
 
                 "mute me" => {
-                    if sender.group.permission == "ADMINISTRATOR" {
+                    if let Permission::Administrator | Permission::Owner = sender.group.permission {
                         session.mute(sender.group.id, sender.id, 60 * 10).await.unwrap();
 
                         {

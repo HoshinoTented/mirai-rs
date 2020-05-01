@@ -9,6 +9,18 @@ pub type MessageChain = Vec<SingleMessage>;
 pub type MessageId = i64;
 pub type TimeStamp = u64;
 
+#[derive(Deserialize, Debug, Clone)]
+pub enum Permission {
+    #[serde(rename = "ADMINISTRATOR")]
+    Administrator,
+
+    #[serde(rename = "OWNER")]
+    Owner,
+
+    #[serde(rename = "MEMBER")]
+    Member,
+}
+
 /// # MessagePackage
 ///
 /// `MessagePackage` will be returned from `Session::get_message`.
@@ -165,7 +177,7 @@ pub struct GroupMember {
     pub id: Target,
     #[serde(rename = "memberName")]
     pub member_name: String,
-    pub permission: String,
+    pub permission: Permission,
     pub group: Group,
 }
 
@@ -190,7 +202,7 @@ pub struct FriendMember {
 pub struct Group {
     pub id: Target,
     pub name: String,
-    pub permission: String,
+    pub permission: Permission,
 }
 
 /// # Message
