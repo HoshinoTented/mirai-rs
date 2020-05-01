@@ -7,4 +7,4 @@ jobs:
       - checkout
       - run:
           name: Building
-          coommand: cargo build
+          command: cargo build
