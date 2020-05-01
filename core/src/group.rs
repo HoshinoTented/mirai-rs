@@ -35,7 +35,7 @@ impl Session {
         self.do_mute_all(target, false).await
     }
 
-    pub async fn mute(&self, group_id: Target, target: Target, seconds: i32) -> Result<()> {
+    pub async fn mute(&self, group_id: Target, target: Target, seconds: u32) -> Result<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -43,7 +43,7 @@ impl Session {
             target: Target,
             #[serde(rename = "memberId")]
             member_id: Target,
-            time: i32,
+            time: u32,
         }
 
         let req = Request {

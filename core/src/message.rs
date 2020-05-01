@@ -77,6 +77,46 @@ pub enum MessagePackage {
         operator: Target,
     },
 
+    BotOnlineEvent { qq: Target },
+    BotOfflineEventActive { qq: Target },
+    BotOfflineEventForce { qq: Target },
+    BotOfflineEventDropped { qq: Target },
+    BotReloginEvent { qq: Target },
+
+    BotGroupPermissionChangeEvent {
+        origin: Permission,
+        current: Permission,
+        group: Group,
+    },
+
+    BotMuteEvent {
+        #[serde(rename = "durationSeconds")]
+        duration: u32,
+        operator: GroupMember,
+    },
+
+    BotUnmuteEvent {
+        operator: GroupMember
+    },
+
+    BotJoinGroupEvent { group: Group },
+    BotLeaveEventActive { group: Group },
+    BotLeaveEventKick { group: Group },
+
+    GroupNameChangeEvent {
+        origin: String,
+        current: String,
+        group: Group,
+        operator: GroupMember,
+    },
+
+    GroupEntranceAnnouncementChangeEvent {
+        origin: String,
+        current: String,
+        group: Group,
+        operator: GroupMember,
+    },
+
     #[serde(other)]
     Unsupported
 }
@@ -108,11 +148,31 @@ pub enum MessagePackage {
 /// * `target`: target member id
 /// * `display`
 ///
-/// ### Image
+/// ### (Flash)?Image
 ///
 /// * `image_id`: image id
-/// * `url`:
-/// * `path`:
+/// * `url`: url which points an image
+/// * `path`: path which points an image
+///
+/// ### Xml
+///
+/// xml message
+///
+/// ### Json
+///
+/// json message
+///
+/// ### App
+///
+/// app message
+///
+/// ### Poke
+///
+/// poke message
+///
+/// ### Unsupported
+///
+/// the message which mirai-rs not supports
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum SingleMessage {
@@ -145,7 +205,7 @@ pub enum SingleMessage {
     },
     FlashImage {
         #[serde(rename = "imageId")]
-        image_id: String,
+        image_id: Option<String>,
         url: Option<String>,
         path: Option<String>,
     },

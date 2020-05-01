@@ -1,18 +1,5 @@
-[package]
-name = "mirai-rs"
-version = "0.1.0"
-authors = ["HoshinoTented <limbolrain@gmail.com>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-reqwest = { version = "0.10.4", features = ["blocking", "json"] }
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-futures = "0.3.4"
-tokio = { version = "0.2.19", features = ["full"] }
-
-[lib]
-name = "mirai_rs"
-path = "src/lib.rs"
+[workspace]
+members = [
+    "core",
+    "macro",
+]
