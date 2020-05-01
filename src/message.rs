@@ -61,7 +61,7 @@ pub enum MessagePackage {
         author_id: Target,
         #[serde(rename = "messageId")]
         message_id: MessageId,
-        time: u64,
+        time: TimeStamp,
         operator: Target,
     },
 
