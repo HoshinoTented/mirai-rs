@@ -22,7 +22,7 @@ async fn main() {
     println!("Please input qq id: ");
     stdin().read_line(&mut id).expect("input error");
 
-    let session = Session::auth(server, auth_key.trim()).await.unwrap();
+    let session = server.auth(auth_key.trim()).await.unwrap();
     session.verify(id.trim().parse().expect("wrong qq id format")).await.unwrap();
 
     println!("Done: {:?}", session);

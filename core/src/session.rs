@@ -4,11 +4,17 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Result, ImpossibleError, assert};
 use crate::{Code, Target};
 
+/// # MiraiServer
+///
+/// mirai server contains server address ([base_url]).
 #[derive(Clone, Debug)]
 pub struct MiraiServer {
     pub base_url: String
 }
 
+/// # Session
+///
+/// a session which authorized with a mirai server ([server])
 #[derive(Debug)]
 pub struct Session {
     pub(crate) client: Client,
@@ -45,22 +51,14 @@ impl MiraiServer {
     }
 
     pub async fn about(&self) -> Result<AboutResponse> {
-        let client = Client::new();
-
-        let resp: AboutResponse = client.get(&format!("{}/about", self.base_url))
-            .send().await?
+        let resp: AboutResponse = reqwest::get(&self.url("/about"))
+            .await?
             .json().await?;
 
         Ok(resp)
     }
-}
 
-impl Session {
-    pub fn url(&self, path: &str) -> String {
-        self.server.url(path)
-    }
-
-    pub async fn auth(server: MiraiServer, auth_key: &str) -> Result<Session> {
+    pub async fn auth(&self, auth_key: &str) -> Result<Session> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "authKey")]
@@ -78,7 +76,7 @@ impl Session {
             auth_key: auth_key.to_string()
         };
 
-        let result: Response = client.post(&server.url("/auth"))
+        let result: Response = client.post(&self.url("/auth"))
             .json(&req).send().await?
             .json().await?;
 
@@ -86,9 +84,15 @@ impl Session {
 
         Ok(Session {
             client,
-            server: server.clone(),
+            server: self.clone(),
             key: result.session.ok_or(ImpossibleError("session is None".to_string()))?,
         })
+    }
+}
+
+impl Session {
+    pub fn url(&self, path: &str) -> String {
+        self.server.url(path)
     }
 
     pub async fn verify(&self, qq: Target) -> Result<()> {
