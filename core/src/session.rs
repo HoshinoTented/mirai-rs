@@ -4,10 +4,15 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Result, ImpossibleError, assert};
 use crate::{Code, Target};
 
+#[derive(Clone, Debug)]
+pub struct MiraiServer {
+    pub base_url: String
+}
+
 #[derive(Debug)]
 pub struct Session {
     pub(crate) client: Client,
-    pub base_url: String,
+    pub server: MiraiServer,
     pub key: String,
 }
 
@@ -17,12 +22,45 @@ pub(crate) struct CommonResponse {
     pub msg: String,
 }
 
-impl Session {
+#[derive(Deserialize)]
+pub struct AboutResponse {
+    code: Code,
+    data: AboutData,
+}
+
+#[derive(Deserialize)]
+pub struct AboutData {
+    version: String
+}
+
+impl MiraiServer {
+    pub fn new(base_url: &str) -> MiraiServer {
+        MiraiServer {
+            base_url: base_url.to_string()
+        }
+    }
+
     pub fn url(&self, path: &str) -> String {
         self.base_url.clone() + path
     }
 
-    pub async fn auth(base_url: &str, auth_key: &str) -> Result<Session> {
+    pub async fn about(&self) -> Result<AboutResponse> {
+        let client = Client::new();
+
+        let resp: AboutResponse = client.get(&format!("{}/about", self.base_url))
+            .send().await?
+            .json().await?;
+
+        Ok(resp)
+    }
+}
+
+impl Session {
+    pub fn url(&self, path: &str) -> String {
+        self.server.url(path)
+    }
+
+    pub async fn auth(server: MiraiServer, auth_key: &str) -> Result<Session> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "authKey")]
@@ -40,7 +78,7 @@ impl Session {
             auth_key: auth_key.to_string()
         };
 
-        let result: Response = client.post(&format!("{}/auth", base_url))
+        let result: Response = client.post(&server.url("/auth"))
             .json(&req).send().await?
             .json().await?;
 
@@ -48,7 +86,7 @@ impl Session {
 
         Ok(Session {
             client,
-            base_url: base_url.to_string(),
+            server: server.clone(),
             key: result.session.ok_or(ImpossibleError("session is None".to_string()))?,
         })
     }

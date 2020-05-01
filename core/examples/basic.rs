@@ -1,4 +1,4 @@
-use mirai_rs::session::Session;
+use mirai_rs::session::{Session, MiraiServer};
 use mirai_rs::message::{MessagePackage, SingleMessage, Message, Permission};
 
 use std::io::stdin;
@@ -7,8 +7,14 @@ use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
+    let server = MiraiServer::new("http://localhost:8080");
     let mut auth_key = String::new();
     let mut id = String::new();
+
+    while let Err(_) = server.about().await {
+        println!("Cannot connect to Server, try to reconnect...");
+        std::thread::sleep(Duration::from_secs(1));
+    }
 
     println!("Please input auth key: ");
     stdin().read_line(&mut auth_key).expect("input error");
@@ -16,7 +22,7 @@ async fn main() {
     println!("Please input qq id: ");
     stdin().read_line(&mut id).expect("input error");
 
-    let session = Session::auth("http://localhost:8080", auth_key.trim()).await.unwrap();
+    let session = Session::auth(server, auth_key.trim()).await.unwrap();
     session.verify(id.trim().parse().expect("wrong qq id format")).await.unwrap();
 
     println!("Done: {:?}", session);
@@ -70,15 +76,21 @@ async fn main() {
 
                 "mute me" => {
                     if let Permission::Administrator | Permission::Owner = sender.group.permission {
-                        session.mute(sender.group.id, sender.id, 60 * 10).await.unwrap();
+                        if let Permission::Administrator | Permission::Owner = sender.permission {
+                            session.send_group_message(
+                                Message::new(sender.group.id, &vec!["You are too powerful to mute.".into()])
+                            ).await.unwrap();
+                        } else {
+                            session.mute(sender.group.id, sender.id, 60 * 10).await.unwrap();
 
-                        {
-                            let session = session.clone();
-                            let sender = sender.clone();
-                            tokio::spawn(async move {
-                                std::thread::sleep(Duration::from_secs(10));
-                                session.unmute(sender.group.id, sender.id).await.unwrap();
-                            });
+                            {
+                                let session = session.clone();
+                                let sender = sender.clone();
+                                tokio::spawn(async move {
+                                    std::thread::sleep(Duration::from_secs(10));
+                                    session.unmute(sender.group.id, sender.id).await.unwrap();
+                                });
+                            }
                         }
                     } else {
                         session.send_group_message(
