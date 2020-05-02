@@ -1,5 +1,5 @@
-use mirai_rs::session::MiraiServer;
-use mirai_rs::message::{MessagePackage, SingleMessage, Message, Permission, MessageBuilder, CanBuildMessage};
+use mirai::session::MiraiServer;
+use mirai::message::{MessagePackage, SingleMessage, Message, Permission, MessageBuilder, CanBuildMessage};
 
 use std::io::stdin;
 use std::sync::{mpsc, Arc};
