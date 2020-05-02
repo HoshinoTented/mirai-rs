@@ -274,15 +274,36 @@ pub struct Group {
 /// # Message
 #[derive(Debug, Serialize)]
 pub struct Message {
-    pub(crate) target: Target,
+    pub target: Target,
+    pub quote: Option<MessageId>,
     #[serde(rename = "messageChain")]
-    pub(crate) message_chain: Vec<SingleMessage>,
+    pub message_chain: Vec<SingleMessage>,
+}
+
+#[derive(Serialize)]
+struct RichSendMsgRequest<'mc> {
+    #[serde(rename = "sessionKey")]
+    session_key: String,
+    qq: Option<Target>,
+    group: Option<Target>,
+    quote: Option<MessageId>,
+    #[serde(rename = "messageChain")]
+    message_chain: &'mc MessageChain,
+}
+
+#[derive(Deserialize)]
+struct SendMsgResponse {
+    code: Code,
+    //            msg: String,
+    #[serde(rename = "messageId")]
+    message_id: Option<u64>,
 }
 
 impl Message {
-    pub fn new(target: Target, message_chain: &Vec<SingleMessage>) -> Message {
+    pub fn new(target: Target, quote: Option<MessageId>, message_chain: &Vec<SingleMessage>) -> Message {
         Message {
             target,
+            quote,
             message_chain: message_chain.to_vec(),
         }
     }
@@ -290,31 +311,8 @@ impl Message {
 
 /// send message
 impl Session {
-    async fn send_message<'mc>(&self, message_type: &str, message: &'mc Message) -> Result<u64> {
-        #[derive(Serialize)]
-        struct SendMessageRequest<'mc> {
-            #[serde(rename = "sessionKey")]
-            session_key: String,
-            target: Target,
-            #[serde(rename = "messageChain")]
-            message_chain: &'mc MessageChain,
-        }
-
-        #[derive(Deserialize)]
-        struct SendMessageResponse {
-            code: Code,
-            //            msg: String,
-            #[serde(rename = "messageId")]
-            message_id: Option<u64>,
-        }
-
-        let req = SendMessageRequest {
-            session_key: self.key.clone(),
-            target: message.target,
-            message_chain: &message.message_chain,
-        };
-
-        let resp: SendMessageResponse = self.client.post(&self.url(&format!("/send{}Message", message_type)))
+    async fn send_message<'req>(&self, message_type: &str, req: RichSendMsgRequest<'req>) -> Result<u64> {
+        let resp: SendMsgResponse = self.client.post(&self.url(&format!("/send{}Message", message_type)))
             .json(&req).send().await?
             .json().await?;
 
@@ -324,15 +322,33 @@ impl Session {
     }
 
     pub async fn send_group_message(&self, message: &Message) -> Result<u64> {
-        self.send_message("Group", message).await
+        self.send_message("Group", RichSendMsgRequest {
+            session_key: self.key.clone(),
+            qq: None,
+            group: Some(message.target),
+            quote: message.quote,
+            message_chain: &message.message_chain,
+        }).await
     }
 
     pub async fn send_friend_message(&self, message: &Message) -> Result<u64> {
-        self.send_message("Friend", message).await
+        self.send_message("Friend", RichSendMsgRequest {
+            session_key: self.key.clone(),
+            qq: Some(message.target),
+            group: None,
+            quote: message.quote,
+            message_chain: &message.message_chain,
+        }).await
     }
 
-    pub async fn send_temp_message(&self, message: &Message) -> Result<u64> {
-        self.send_message("Temp", message).await
+    pub async fn send_temp_message(&self, group: Target, message: &Message) -> Result<u64> {
+        self.send_message("Temp", RichSendMsgRequest {
+            session_key: self.key.clone(),
+            qq: Some(message.target),
+            group: Some(group),
+            quote: message.quote,
+            message_chain: &message.message_chain,
+        }).await
     }
 }
 
