@@ -108,6 +108,12 @@ async fn main() {
                 }
                 _ => {}
             };
+
+            let config = session.get_group_config(sender.group.id).await.unwrap();
+            let info = session.get_member_info(sender.group.id, sender.id).await.unwrap();
+
+            println!("{:?}", config);
+            println!("{:?}", info);
         }
 
         println!("{:?}", mp);
