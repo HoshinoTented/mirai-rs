@@ -355,6 +355,13 @@ pub trait CanBuildMessage {
     fn build_message(&self) -> MessageBuilder;
 }
 
+/// # MessageBuilder
+///
+/// `MessageBuilder` can build a `Message` by builder-like flavor.
+///
+/// When invoking [build] function, `MessageBuilder` need: [target] and a non-empty [message_chain],
+/// if not, [build] function will returns an Error.
+///
 impl MessageBuilder {
     pub fn new() -> MessageBuilder {
         MessageBuilder {
