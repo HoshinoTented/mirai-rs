@@ -3,7 +3,7 @@ use serde::export::fmt::Debug;
 
 use crate::{Target, Code};
 use crate::session::Session;
-use crate::error::{Result, assert, ImpossibleError};
+use crate::error::{Result, assert, ImpossibleError, MiraiError};
 
 pub type MessageChain = Vec<SingleMessage>;
 pub type MessageId = i64;
@@ -46,6 +46,7 @@ pub enum Permission {
 /// ### FriendRecallEvent
 ///
 /// the same as above
+///
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize)]
 pub enum MessagePackage {
@@ -176,6 +177,7 @@ pub enum MessagePackage {
 /// ### Unsupported
 ///
 /// the message which mirai-rs not supports
+///
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum SingleMessage {
@@ -229,6 +231,20 @@ pub enum SingleMessage {
     Unsupported
 }
 
+impl From<String> for SingleMessage {
+    fn from(str: String) -> Self {
+        SingleMessage::Plain {
+            text: str
+        }
+    }
+}
+
+impl From<&str> for SingleMessage {
+    fn from(str: &str) -> Self {
+        SingleMessage::from(str.to_string())
+    }
+}
+
 /// # GroupMember
 ///
 /// This struct can get from `MessagePackage::Group`
@@ -238,6 +254,7 @@ pub enum SingleMessage {
 /// * `id`: the id of sender
 /// * `member_name`: sender's name
 /// * `permission`: sender's permission in this group
+///
 #[derive(Debug, Clone, Deserialize)]
 pub struct GroupMember {
     pub id: Target,
@@ -264,6 +281,7 @@ pub struct FriendMember {
 /// * `id`: the group id
 /// * `name`: the group name
 /// * `permission`: bot's permission in this group
+///
 #[derive(Debug, Clone, Deserialize)]
 pub struct Group {
     pub id: Target,
@@ -280,6 +298,105 @@ pub struct Message {
     pub message_chain: Vec<SingleMessage>,
 }
 
+impl Message {
+    pub fn new(target: Target, quote: Option<MessageId>, message_chain: &Vec<SingleMessage>) -> Message {
+        Message {
+            target,
+            quote,
+            message_chain: message_chain.to_vec(),
+        }
+    }
+}
+
+impl From<MessageBuilder> for Message {
+    fn from(builder: MessageBuilder) -> Self {
+        builder.build().unwrap()
+    }
+}
+
+/// Message Builder
+#[derive(Debug, Clone)]
+pub struct MessageBuilder {
+    target: Option<Target>,
+    quote: Option<MessageId>,
+    message_chain: Vec<SingleMessage>,
+}
+
+impl CanBuildMessage for Group {
+    fn build_message(&self) -> MessageBuilder {
+        MessageBuilder::new().target(self.id)
+    }
+}
+
+impl CanBuildMessage for FriendMember {
+    fn build_message(&self) -> MessageBuilder {
+        MessageBuilder::new().target(self.id)
+    }
+}
+
+impl CanBuildMessage for MessageBuilder {
+    fn build_message(&self) -> MessageBuilder {
+        if let None = self.target {
+            Err(MiraiError::MessageBuildingError("Message need a target!")).unwrap()
+        }
+
+        self.clone()
+    }
+}
+
+
+/// # CanBuildMessage Trait
+///
+/// ## build_message
+///
+/// this function will returns a `MessageBuilder` which `target` field is not None
+///
+pub trait CanBuildMessage {
+    fn build_message(&self) -> MessageBuilder;
+}
+
+impl MessageBuilder {
+    pub fn new() -> MessageBuilder {
+        MessageBuilder {
+            target: None,
+            quote: None,
+            message_chain: Vec::new(),
+        }
+    }
+
+    pub fn target(mut self, target: Target) -> MessageBuilder {
+        self.target = Some(target);
+        self
+    }
+
+    pub fn append_message(mut self, msg: SingleMessage) -> MessageBuilder {
+        self.message_chain.push(msg);
+        self
+    }
+
+    pub fn quote(mut self, quote: MessageId) -> MessageBuilder {
+        self.quote = Some(quote);
+        self
+    }
+
+    pub fn build(self) -> Result<Message> {
+        let target = self.target.ok_or(MiraiError::MessageBuildingError("Message need a target!"))?;
+        let quote = self.quote;
+        let message_chain = self.message_chain;
+
+        if message_chain.is_empty() {
+            return Err(MiraiError::MessageBuildingError("Message has no content!"));
+        }
+
+        Ok(Message {
+            target,
+            quote,
+            message_chain,
+        })
+    }
+}
+
+/// send message
 #[derive(Serialize)]
 struct RichSendMsgRequest<'mc> {
     #[serde(rename = "sessionKey")]
@@ -299,17 +416,6 @@ struct SendMsgResponse {
     message_id: Option<u64>,
 }
 
-impl Message {
-    pub fn new(target: Target, quote: Option<MessageId>, message_chain: &Vec<SingleMessage>) -> Message {
-        Message {
-            target,
-            quote,
-            message_chain: message_chain.to_vec(),
-        }
-    }
-}
-
-/// send message
 impl Session {
     async fn send_message<'req>(&self, message_type: &str, req: RichSendMsgRequest<'req>) -> Result<u64> {
         let resp: SendMsgResponse = self.client.post(&self.url(&format!("/send{}Message", message_type)))
@@ -356,7 +462,7 @@ impl Session {
 impl Session {
     async fn get_message(&self, is_fetch: bool, is_newest: bool, count: usize) -> Result<Vec<MessagePackage>> {
         #[derive(Deserialize)]
-        struct GetMessageResponse {
+        struct Response {
             code: Code,
             data: Vec<MessagePackage>,
         }
@@ -367,7 +473,7 @@ impl Session {
                           sessionKey = self.key,
                           count = count);
 
-        let response: GetMessageResponse = self.client.get(&self.url(&url))
+        let response: Response = self.client.get(&self.url(&url))
             .send().await?
             .json().await?;
 
@@ -390,19 +496,5 @@ impl Session {
 
     pub async fn peek_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
         self.get_message(false, false, count).await
-    }
-}
-
-impl From<String> for SingleMessage {
-    fn from(str: String) -> Self {
-        SingleMessage::Plain {
-            text: str
-        }
-    }
-}
-
-impl From<&str> for SingleMessage {
-    fn from(str: &str) -> Self {
-        SingleMessage::from(str.to_string())
     }
 }

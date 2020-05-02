@@ -13,6 +13,7 @@ pub enum MiraiError {
     CodeError(Code, String),
     ImpossibleError(String),
     HttpError(ReqError),
+    MessageBuildingError(&'static str),
 }
 
 const SUCCESS: Code = 0;
@@ -52,7 +53,8 @@ impl std::fmt::Display for MiraiError {
         match self {
             MiraiError::CodeError(code, s) => f.write_str(&format!("{}: {}", code, s)),
             MiraiError::ImpossibleError(s) => f.write_str(&format!("{}", s)),
-            MiraiError::HttpError(e) => f.write_str(&e.to_string())
+            MiraiError::HttpError(e) => f.write_str(&e.to_string()),
+            MiraiError::MessageBuildingError(e) => f.write_str(e),
         }
     }
 }

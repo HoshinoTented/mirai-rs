@@ -1,5 +1,5 @@
 use mirai_rs::session::MiraiServer;
-use mirai_rs::message::{MessagePackage, SingleMessage, Message, Permission};
+use mirai_rs::message::{MessagePackage, SingleMessage, Message, Permission, MessageBuilder, CanBuildMessage};
 
 use std::io::stdin;
 use std::sync::{mpsc, Arc};
@@ -87,7 +87,9 @@ async fn main() {
                     if let Permission::Administrator | Permission::Owner = sender.group.permission {
                         if let Permission::Administrator | Permission::Owner = sender.permission {
                             session.send_group_message(
-                                &Message::new(sender.group.id, None, &vec!["You are too powerful to mute.".into()])
+                                &sender.group.build_message()
+                                    .append_message("You are too powerful to mute.".into())
+                                    .build().unwrap()
                             ).await.unwrap();
                         } else {
                             session.mute(sender.group.id, sender.id, 60 * 10).await.unwrap();
@@ -103,7 +105,9 @@ async fn main() {
                         }
                     } else {
                         session.send_group_message(
-                            &Message::new(sender.group.id, None, &vec!["I have not enough permission QAQ.".into()])
+                            &sender.group.build_message()
+                                .append_message("I have not enough permission QAQ.".into())
+                                .build().unwrap()
                         ).await.unwrap();
                     }
                 }
@@ -111,7 +115,10 @@ async fn main() {
                 "talk with me" => {
                     session.send_temp_message(
                         sender.group.id,
-                        &Message::new(sender.id, None, &vec!["Hello".into()]),
+                        &MessageBuilder::new()
+                            .target(sender.id)
+                            .append_message("Hello".into())
+                            .build().unwrap(),
                     ).await.unwrap();
                 }
                 _ => {}
