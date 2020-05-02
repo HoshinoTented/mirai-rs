@@ -11,9 +11,18 @@ async fn main() {
     let mut auth_key = String::new();
     let mut id = String::new();
 
-    while let Err(_) = server.about().await {
-        println!("Cannot connect to Server, try to reconnect...");
-        std::thread::sleep(Duration::from_secs(1));
+    loop {
+        match server.about().await {
+            Err(_) => {
+                println!("Cannot connect to Server, try to reconnect...");
+                std::thread::sleep(Duration::from_secs(1));
+            }
+
+            Ok(resp) => {
+                println!("Mirai Server Version: {}", resp.data.version);
+                break;
+            }
+        }
     }
 
     println!("Please input auth key: ");

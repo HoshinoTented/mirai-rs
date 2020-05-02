@@ -30,13 +30,13 @@ pub(crate) struct CommonResponse {
 
 #[derive(Deserialize)]
 pub struct AboutResponse {
-    code: Code,
-    data: AboutData,
+    pub code: Code,
+    pub data: AboutData,
 }
 
 #[derive(Deserialize)]
 pub struct AboutData {
-    version: String
+    pub version: String
 }
 
 impl MiraiServer {
