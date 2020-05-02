@@ -290,14 +290,14 @@ impl Message {
 
 /// send message
 impl Session {
-    async fn send_message(&self, message_type: &str, message: Message) -> Result<u64> {
+    async fn send_message<'mc>(&self, message_type: &str, message: &'mc Message) -> Result<u64> {
         #[derive(Serialize)]
-        struct SendMessageRequest {
+        struct SendMessageRequest<'mc> {
             #[serde(rename = "sessionKey")]
             session_key: String,
             target: Target,
             #[serde(rename = "messageChain")]
-            message_chain: MessageChain,
+            message_chain: &'mc MessageChain,
         }
 
         #[derive(Deserialize)]
@@ -311,7 +311,7 @@ impl Session {
         let req = SendMessageRequest {
             session_key: self.key.clone(),
             target: message.target,
-            message_chain: message.message_chain.clone(),
+            message_chain: &message.message_chain,
         };
 
         let resp: SendMessageResponse = self.client.post(&self.url(&format!("/send{}Message", message_type)))
@@ -323,15 +323,15 @@ impl Session {
         resp.message_id.ok_or(ImpossibleError("messageId is None".to_string()))
     }
 
-    pub async fn send_group_message(&self, message: Message) -> Result<u64> {
+    pub async fn send_group_message(&self, message: &Message) -> Result<u64> {
         self.send_message("Group", message).await
     }
 
-    pub async fn send_friend_message(&self, message: Message) -> Result<u64> {
+    pub async fn send_friend_message(&self, message: &Message) -> Result<u64> {
         self.send_message("Friend", message).await
     }
 
-    pub async fn send_temp_message(&self, message: Message) -> Result<u64> {
+    pub async fn send_temp_message(&self, message: &Message) -> Result<u64> {
         self.send_message("Temp", message).await
     }
 }

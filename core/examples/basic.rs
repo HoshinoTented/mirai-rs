@@ -1,4 +1,4 @@
-use mirai_rs::session::{Session, MiraiServer};
+use mirai_rs::session::MiraiServer;
 use mirai_rs::message::{MessagePackage, SingleMessage, Message, Permission};
 
 use std::io::stdin;
@@ -18,11 +18,10 @@ async fn main() {
 
     println!("Please input auth key: ");
     stdin().read_line(&mut auth_key).expect("input error");
+    let session = server.auth(auth_key.trim()).await.unwrap();
 
     println!("Please input qq id: ");
     stdin().read_line(&mut id).expect("input error");
-
-    let session = server.auth(auth_key.trim()).await.unwrap();
     session.verify(id.trim().parse().expect("wrong qq id format")).await.unwrap();
 
     println!("Done: {:?}", session);
@@ -68,7 +67,7 @@ async fn main() {
 
             match msg.trim() {
                 "Hello" => {
-                    session.send_group_message(Message::new(
+                    session.send_group_message(&Message::new(
                         sender.group.id,
                         &vec![SingleMessage::Image { image_id: None, url: None, path: Some("nya.png".to_string()) }])
                     ).await.unwrap();
@@ -78,7 +77,7 @@ async fn main() {
                     if let Permission::Administrator | Permission::Owner = sender.group.permission {
                         if let Permission::Administrator | Permission::Owner = sender.permission {
                             session.send_group_message(
-                                Message::new(sender.group.id, &vec!["You are too powerful to mute.".into()])
+                                &Message::new(sender.group.id, &vec!["You are too powerful to mute.".into()])
                             ).await.unwrap();
                         } else {
                             session.mute(sender.group.id, sender.id, 60 * 10).await.unwrap();
@@ -94,7 +93,7 @@ async fn main() {
                         }
                     } else {
                         session.send_group_message(
-                            Message::new(sender.group.id, &vec!["I have not enough permission QAQ.".into()])
+                            &Message::new(sender.group.id, &vec!["I have not enough permission QAQ.".into()])
                         ).await.unwrap();
                     }
                 }
