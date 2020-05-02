@@ -1,8 +1,49 @@
+//! This mod provides a way to communicate with a mirai-api-http server.
+//!
+//! ## MiraiServer
+//!
+//! First, you should construct a [`MiraiServer`], it contains a [`base_url`] property which is the address to the server.
+//!
+//! ```rust
+//! use mirai::session::MiraiServer;
+//!
+//! let server = MiraiServer::new("http://localhost:8080");
+//! ```
+//!
+//! You can use [`MiraiServer::about`] function to get the server status.
+//!
+//! ## Session
+//!
+//! Second, you can use [`MiraiServer::auth`] to authorize, the auth key can be found in mirai-console output when it starts.
+//!
+//! ```rust
+//! let session = server.auth("auth_key_should_be_kept_secret");
+//! ```
+//!
+//! After authorization, you can bind your session with a bot that is logged in the server.
+//!
+//! ```rust
+//! let account = "QQ Account".parse().unwrap();
+//! session.verify(account);
+//! ```
+//!
+//! You can send and get messages now!
+//!
+//! After these, you should release the connection which your session to a bot.
+//!
+//! ```rust
+//! session.release(account);
+//! ```
+//!
+//! If not, the useless bot will continue to receive messages, this will bring **memory leak**.
+//!
+
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Result, ImpossibleError, assert};
 use crate::{Code, Target};
+
 
 /// # MiraiServer
 ///

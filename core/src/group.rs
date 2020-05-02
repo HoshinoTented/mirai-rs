@@ -3,6 +3,7 @@ use serde::{Serialize, Deserialize};
 use crate::session::{Session, CommonResponse};
 use crate::error::{Result, assert};
 use crate::Target;
+use crate::message::MessageId;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupConfig {

@@ -1,3 +1,6 @@
+//! This mod only provides a way to get a list of member (or group)
+//!
+
 use crate::session::Session;
 use crate::message::{Group, GroupMember, FriendMember};
 use crate::error::{Result};

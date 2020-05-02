@@ -1,3 +1,13 @@
+//! [mirai](https://github.com/mamoe/mirai) is a protocol library for Tencent QQ, you can use it to write a QQ Bot or other thing.
+//!
+//! mirai-rs is a library that base on mirai-api-http server, you may should set up a mirai-api-http server first.
+//!
+//! First, you need to make a connection to the server, please see: [mod session].
+//!
+//! After authorization and verification, you can use [mod message] to receive and send messages.
+//!
+//! Have a good time!
+
 pub mod session;
 pub mod error;
 pub mod message;

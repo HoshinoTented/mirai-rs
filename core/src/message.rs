@@ -1,3 +1,73 @@
+//! You can use [`fetch_newest_message`] (or other similar function) to get a message from the server,
+//! or use [`send_group_message`] (or other similar function) to send a message to someone by the server.
+//!
+//! ## The Message Structure
+//!
+//! [`Message`] is a struct contains the message what you want to send, it has following fields:
+//!
+//! * target: The message target, in other words, is who you want to send to.
+//! * quote: [`quote`] is an optional property, if you want to reply to someone, you can use [`quote`].
+//! * message_chain: Message chain is the content of a [`Message`], it contains [`SingleMessage`]s, we will introduce it below
+//!
+//! ## SingleMessage
+//!
+//! [`SingleMessage`] is the element of [`MessageChain`], it has many variants:
+//!
+//! * Source: It contains a message-id and timestamp, but in common you don't need to use it, it only returns from the server.
+//! * Plain: It contains plain text, [`Plain`] message is common, and most frequently uses.
+//! * Quote: It is similar to [`Source`] variant, it means this message quoted another message, and only returns from the server.
+//! * At: You can use [`At`] variant when you want this message notice somebody, the `display` property is how this [`At`] message displays.
+//! * Image | FlashImage: [`Image`] and [`FlashImage`] are similar, they both send an image message, but [`FlashImage`] has a time limitation.
+//!                       Both of them have three property: [`image_id`], [`url`] and [`path`],
+//!                       [`image_id`] is the id of an image which saved in Tencent server,
+//!                       [`url`] is a url that points to an image,
+//!                       [`path`] is a path that points to an image in the server.
+//!                       They also have priority, [`image_id`] > [`url`] > [`path`].
+//! * Xml | Json | App | Poke: These message are not very commonly used, you can see [this](https://github.com/mamoe/mirai-api-http/blob/master/MessageType.md) for more information.
+//!
+//! ## MessagePackage
+//!
+//! [`MessagePackage`] is the message which you received from the server, it can be a message or an event, the variants are defined in the [`MessagePackage`]
+//!
+//! There are two primary message variant: [`GroupMessage`] and [`FriendMessage`].
+//!
+//! * GroupMessage: the message from a group, it contains a sender ([`GroupMember`]) and a group struct ([`Group`])
+//! * FriendMessage: the message from a friend, it just contains a sender ([`FriendMember`])
+//!
+//! Other message variant or event variants information can found in [this](https://github.com/mamoe/mirai-api-http/blob/master/EventType.md).
+//!
+//! ## MessageBuilder
+//!
+//! [`MessageBuilder`] provides a way to build a message in builder-like flavor.
+//!
+//! like this:
+//!
+//! ```rust
+//! use mirai::message::MessageBuilder;
+//!
+//! let message = MessageBuilder::new()
+//!                 .target(sender.group.id)
+//!                 .quote(message_id)
+//!                 .append_message("Hello".into())
+//!                 .build();
+//! ```
+//!
+//! You can also build a [`MessageBuilder`] from [`Group`] or [`FriendMember`]:
+//!
+//! ```rust
+//! use mirai::message::{MessageBuilder, Group, CanBuildMessage};
+//!
+//! let group: Group = some_group;
+//! let message = group.build_message()
+//!                    .append_message("Hi!".into())
+//!                    .build();
+//! ```
+//!
+//! When invoking [`MessageBuilder::build`] function, you may need to confirm whether a is set or message chain is empty.
+//! Because [`build`] function will inspect [`target`] and [`message_chain`] property, if [`target`] is None, or [`message_chain`] is empty,
+//! [`build`] will return an error.
+//!
+
 use serde::{Serialize, Deserialize};
 use serde::export::fmt::Debug;
 
@@ -9,9 +79,6 @@ pub type MessageChain = Vec<SingleMessage>;
 pub type MessageId = i64;
 pub type TimeStamp = u64;
 
-/// # Permission
-///
-/// Permission enum structure, this can be found in `GroupMember` and `Group`.
 #[derive(Deserialize, Debug, Clone)]
 pub enum Permission {
     #[serde(rename = "ADMINISTRATOR")]
@@ -24,29 +91,6 @@ pub enum Permission {
     Member,
 }
 
-/// # MessagePackage
-///
-/// `MessagePackage` will be returned from `Session::get_message`.
-/// It contains messages (or events) which the bot received.
-///
-/// ## Variants
-///
-/// ### GroupMessage
-///
-/// it contains a message chain (`message_chain`) and a sender (`GroupMember`)
-///
-/// ### FriendMessage
-///
-/// it contains a message chain (`message_chain`) and a sender (`FriendMember`)
-///
-/// ### GroupRecallEvent
-///
-/// it means `operator` recall a group message (`message_id`) which `author_id` sent
-///
-/// ### FriendRecallEvent
-///
-/// the same as above
-///
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize)]
 pub enum MessagePackage {
@@ -125,59 +169,6 @@ pub enum MessagePackage {
     Unsupported
 }
 
-/// # SingleMessage
-///
-/// The element of `MessageChain`.
-///
-/// ## Variants
-///
-/// ### Source
-///
-/// `Source` variant contains message id and timestamp.
-///
-/// ### Plain
-///
-/// `Plain` text message, no special.
-///
-/// ### Quote
-///
-/// * `id`: quoted message id
-/// * `group_id`: what group this message send to
-/// * `sender_id`: sender id
-/// * `target_id`: the sender of quoted message
-/// * `origin`: the message chain of quoted message
-///
-/// ### At
-///
-/// * `target`: target member id
-/// * `display`
-///
-/// ### (Flash)?Image
-///
-/// * `image_id`: image id
-/// * `url`: url which points an image
-/// * `path`: path which points an image
-///
-/// ### Xml
-///
-/// xml message
-///
-/// ### Json
-///
-/// json message
-///
-/// ### App
-///
-/// app message
-///
-/// ### Poke
-///
-/// poke message
-///
-/// ### Unsupported
-///
-/// the message which mirai-rs not supports
-///
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum SingleMessage {
@@ -245,16 +236,6 @@ impl From<&str> for SingleMessage {
     }
 }
 
-/// # GroupMember
-///
-/// This struct can get from `MessagePackage::Group`
-///
-/// ## Attributes
-///
-/// * `id`: the id of sender
-/// * `member_name`: sender's name
-/// * `permission`: sender's permission in this group
-///
 #[derive(Debug, Clone, Deserialize)]
 pub struct GroupMember {
     pub id: Target,
@@ -272,16 +253,6 @@ pub struct FriendMember {
     pub remark: String,
 }
 
-/// # Group
-///
-/// This struct can get from `GroupMember`
-///
-/// ## Attribute
-///
-/// * `id`: the group id
-/// * `name`: the group name
-/// * `permission`: bot's permission in this group
-///
 #[derive(Debug, Clone, Deserialize)]
 pub struct Group {
     pub id: Target,
@@ -289,7 +260,6 @@ pub struct Group {
     pub permission: Permission,
 }
 
-/// # Message
 #[derive(Debug, Serialize)]
 pub struct Message {
     pub target: Target,
@@ -314,7 +284,7 @@ impl From<MessageBuilder> for Message {
     }
 }
 
-/// Message Builder
+// -------------------------------------------------- Message Builder
 #[derive(Debug, Clone)]
 pub struct MessageBuilder {
     target: Option<Target>,
@@ -403,7 +373,7 @@ impl MessageBuilder {
     }
 }
 
-/// send message
+// -------------------------------------------------- send message
 #[derive(Serialize)]
 struct RichSendMsgRequest<'mc> {
     #[serde(rename = "sessionKey")]
@@ -465,7 +435,7 @@ impl Session {
     }
 }
 
-/// receive message
+// -------------------------------------------------- receive message
 impl Session {
     async fn get_message(&self, is_fetch: bool, is_newest: bool, count: usize) -> Result<Vec<MessagePackage>> {
         #[derive(Deserialize)]
