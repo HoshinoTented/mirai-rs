@@ -1,5 +1,5 @@
 use mirai::session::MiraiServer;
-use mirai::message::{MessagePackage, SingleMessage, Permission, MessageBuilder, AsTempChannel, AsGroupChannel};
+use mirai::message::{MessagePacket, SingleMessage, Permission, MessageBuilder, AsTempChannel, AsGroupChannel};
 
 use std::io::stdin;
 use std::sync::{mpsc, Arc};
@@ -8,8 +8,6 @@ use std::time::Duration;
 #[tokio::main]
 async fn main() {
     let server = MiraiServer::new("http://localhost:8080");
-    let mut auth_key = String::new();
-    let mut id = String::new();
 
     loop {
         match server.about().await {
@@ -24,6 +22,9 @@ async fn main() {
             }
         }
     }
+
+    let mut auth_key = String::new();
+    let mut id = String::new();
 
     println!("Please input auth key: ");
     stdin().read_line(&mut auth_key).expect("input error");
@@ -47,9 +48,9 @@ async fn main() {
 
                 match mps {
                     Ok(mps) => {
-                        let first = mps.get(0);
+                        let first = mps.into_iter().next();
                         if let Some(mp) = first {
-                            sc.send(mp.clone()).unwrap();
+                            sc.send(mp).unwrap();
                         }
                     }
 
@@ -63,7 +64,7 @@ async fn main() {
     println!("{:?}", session.group_list().await);
 
     for mp in rc.iter() {
-        if let MessagePackage::GroupMessage {
+        if let MessagePacket::GroupMessage {
             message_chain,
             sender
         } = &mp {

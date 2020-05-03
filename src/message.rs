@@ -81,21 +81,10 @@ pub type MessageChain = Vec<SingleMessage>;
 pub type MessageId = i64;
 pub type TimeStamp = u64;
 
-#[derive(Deserialize, Debug, Clone)]
-pub enum Permission {
-    #[serde(rename = "ADMINISTRATOR")]
-    Administrator,
-
-    #[serde(rename = "OWNER")]
-    Owner,
-
-    #[serde(rename = "MEMBER")]
-    Member,
-}
-
+// -------------------------------------------------- SingleMessage and MessagePackage
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize)]
-pub enum MessagePackage {
+pub enum MessagePacket {
     GroupMessage {
         #[serde(rename = "messageChain")]
         message_chain: MessageChain,
@@ -238,6 +227,19 @@ impl From<&str> for SingleMessage {
     }
 }
 
+// -------------------------------------------------- Permission, Group, GroupMember and FriendMember
+#[derive(Deserialize, Debug, Clone)]
+pub enum Permission {
+    #[serde(rename = "ADMINISTRATOR")]
+    Administrator,
+
+    #[serde(rename = "OWNER")]
+    Owner,
+
+    #[serde(rename = "MEMBER")]
+    Member,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct GroupMember {
     pub(crate) id: Target,
@@ -308,6 +310,7 @@ impl Group {
     }
 }
 
+// -------------------------------------------------- Message Channel
 #[derive(Debug, Clone)]
 pub enum MessageChannel {
     Friend(Target),
@@ -396,6 +399,7 @@ impl AsFriendChannel for FriendMember {
     }
 }
 
+// -------------------------------------------------- Message
 #[derive(Debug, Clone)]
 pub struct Message {
     pub quote: Option<MessageId>,
@@ -520,11 +524,11 @@ impl Session {
 
 // -------------------------------------------------- receive message
 impl Session {
-    async fn get_message(&self, is_fetch: bool, is_newest: bool, count: usize) -> Result<Vec<MessagePackage>> {
+    async fn get_message(&self, is_fetch: bool, is_newest: bool, count: usize) -> Result<Vec<MessagePacket>> {
         #[derive(Deserialize)]
         struct Response {
             code: Code,
-            data: Vec<MessagePackage>,
+            data: Vec<MessagePacket>,
         }
 
         let url = format!("/{is_fetch}{is_newest}Message?sessionKey={sessionKey}&count={count}",
@@ -542,19 +546,19 @@ impl Session {
         Ok(response.data)
     }
 
-    pub async fn fetch_newest_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
+    pub async fn fetch_newest_message(&self, count: usize) -> Result<Vec<MessagePacket>> {
         self.get_message(true, true, count).await
     }
 
-    pub async fn fetch_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
+    pub async fn fetch_message(&self, count: usize) -> Result<Vec<MessagePacket>> {
         self.get_message(true, false, count).await
     }
 
-    pub async fn peek_newest_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
+    pub async fn peek_newest_message(&self, count: usize) -> Result<Vec<MessagePacket>> {
         self.get_message(false, true, count).await
     }
 
-    pub async fn peek_message(&self, count: usize) -> Result<Vec<MessagePackage>> {
+    pub async fn peek_message(&self, count: usize) -> Result<Vec<MessagePacket>> {
         self.get_message(false, false, count).await
     }
 }
