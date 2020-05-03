@@ -110,17 +110,23 @@ pub enum GroupChangeEventKind {
 
 #[serde(untagged)]
 #[derive(Clone, Debug, Deserialize)]
-pub enum ChangeElementType {
-    String(String),
-    Bool(bool),
+pub enum ChangeType {
+    String {
+        origin: String,
+        current: String,
+    },
+    Bool {
+        origin: bool,
+        current: bool,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct GroupChangeEvent {
     #[serde(rename = "type")]
     kind: GroupChangeEventKind,
-    origin: ChangeElementType,
-    current: ChangeElementType,
+    #[serde(flatten)]
+    change: ChangeType,
     group: Group,
     operator: GroupMember,
 }
