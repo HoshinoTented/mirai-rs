@@ -228,26 +228,72 @@ impl From<&str> for SingleMessage {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct GroupMember {
-    pub id: Target,
+    pub(crate) id: Target,
     #[serde(rename = "memberName")]
-    pub member_name: String,
-    pub permission: Permission,
-    pub group: Group,
+    pub(crate) member_name: String,
+    pub(crate) permission: Permission,
+    pub(crate) group: Group,
+}
+
+impl GroupMember {
+    pub fn id(&self) -> Target {
+        self.id
+    }
+
+    pub fn member_name(&self) -> String {
+        self.member_name.clone()
+    }
+
+    pub fn permission(&self) -> Permission {
+        self.permission.clone()
+    }
+
+    pub fn group(&self) -> Group {
+        self.group.clone()
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct FriendMember {
-    pub id: Target,
+    pub(crate) id: Target,
     #[serde(rename = "nickname")]
-    pub nick_name: String,
-    pub remark: String,
+    pub(crate) nick_name: String,
+    pub(crate) remark: String,
+}
+
+impl FriendMember {
+    pub fn id(&self) -> Target {
+        self.id
+    }
+
+    pub fn nick_name(&self) -> String {
+        self.nick_name.clone()
+    }
+
+    pub fn remark(&self) -> String {
+        self.remark.clone()
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Group {
-    pub id: Target,
-    pub name: String,
-    pub permission: Permission,
+    pub(crate) id: Target,
+    pub(crate) name: String,
+    pub(crate) permission: Permission,
+}
+
+impl Group {
+    pub fn id(&self) -> Target {
+        self.id
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn permission(&self) -> Permission {
+        self.permission.clone()
+    }
 }
 
 #[derive(Debug, Clone)]

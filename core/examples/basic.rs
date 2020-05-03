@@ -77,34 +77,34 @@ async fn main() {
 
             match msg.trim() {
                 "Hello" => {
-                    session.send_message(&sender.group.as_group_channel(), &MessageBuilder::new()
+                    session.send_message(&sender.group().as_group_channel(), &MessageBuilder::new()
                         .append_message(SingleMessage::Image { image_id: None, url: None, path: Some("nya.png".to_string()) })
                         .build().unwrap(),
                     ).await.unwrap();
                 }
 
                 "mute me" => {
-                    if let Permission::Administrator | Permission::Owner = sender.group.permission {
-                        if let Permission::Administrator | Permission::Owner = sender.permission {
-                            session.send_message(&sender.group.as_group_channel(),
+                    if let Permission::Administrator | Permission::Owner = sender.group().permission() {
+                        if let Permission::Administrator | Permission::Owner = sender.permission() {
+                            session.send_message(&sender.group().as_group_channel(),
                                                  &MessageBuilder::new()
                                                      .append_message("You are too powerful to mute.".into())
                                                      .build().unwrap(),
                             ).await.unwrap();
                         } else {
-                            session.mute(sender.group.id, sender.id, 60 * 10).await.unwrap();
+                            session.mute(sender.group().id(), sender.id(), 60 * 10).await.unwrap();
 
                             {
                                 let session = session.clone();
                                 let sender = sender.clone();
                                 tokio::spawn(async move {
                                     std::thread::sleep(Duration::from_secs(10));
-                                    session.unmute(sender.group.id, sender.id).await.unwrap();
+                                    session.unmute(sender.group().id(), sender.id()).await.unwrap();
                                 });
                             }
                         }
                     } else {
-                        session.send_message(&sender.group.as_group_channel(),
+                        session.send_message(&sender.group().as_group_channel(),
                                              &MessageBuilder::new()
                                                  .append_message("I have not enough permission QAQ.".into())
                                                  .build().unwrap(),
@@ -122,8 +122,8 @@ async fn main() {
                 _ => {}
             };
 
-            let config = session.get_group_config(sender.group.id).await.unwrap();
-            let info = session.get_member_info(sender.group.id, sender.id).await.unwrap();
+            let config = session.get_group_config(sender.group().id()).await.unwrap();
+            let info = session.get_member_info(sender.group().id(), sender.id()).await.unwrap();
 
             println!("{:?}", config);
             println!("{:?}", info);
