@@ -6,7 +6,7 @@
 //! [`Message`] is a struct contains the message what you want to send, it has following fields:
 //!
 //! * quote: [`quote`] is an optional property, if you want to reply to someone, you can use [`quote`].
-//! * message_chain: Message chain is the content of a [`Message`], it contains [`SingleMessage`]s, we will introduce it below
+//! * message_chain: Message chain is the content of a [`Message`], it contains [`SingleMessage`]s.
 //!
 //! ## MessageBuilder
 //!
