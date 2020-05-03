@@ -57,6 +57,18 @@
 //! * Friend: send a message to a friend
 //! * Temp: send a message to a group member
 //!
+//! Then you can:
+//!
+//! ```rust
+//! use mirai::message::{MessageChannel, MessageBuilder};
+//! use mirai::session::Session;
+//!
+//! let session: Session = my_session;
+//! let target_channel = MessageChannel::Group(group);
+//! let message = MessageBuilder::new().append_message("Hello".into()).build().unwrap();
+//!
+//! session.send_message(&target_channel, &message).await.unwrap();
+//! ```
 
 use serde::{Serialize, Deserialize};
 use serde::export::fmt::Debug;
