@@ -1,9 +1,13 @@
-use mirai::session::MiraiServer;
-use mirai::message::{MessagePacket, SingleMessage, Permission, MessageBuilder, AsTempChannel, AsGroupChannel};
-
 use std::io::stdin;
 use std::sync::{mpsc, Arc};
 use std::time::Duration;
+
+use mirai::session::MiraiServer;
+use mirai::message::event::{EventPacket, MessageEvent};
+use mirai::message::single::SingleMessage;
+use mirai::message::channel::{AsGroupChannel, AsTempChannel};
+use mirai::message::MessageBuilder;
+use mirai::message::element::Permission;
 
 #[tokio::main]
 async fn main() {
@@ -64,10 +68,10 @@ async fn main() {
     println!("{:?}", session.group_list().await);
 
     for mp in rc.iter() {
-        if let MessagePacket::GroupMessage {
-            message_chain,
-            sender
-        } = &mp {
+        if let EventPacket::MessageEvent(MessageEvent::GroupMessage {
+                                             message_chain,
+                                             sender
+                                         }) = &mp {
             let msg = message_chain.iter().fold(String::new(), |msg, elem| {
                 if let SingleMessage::Plain { text } = elem {
                     msg + text

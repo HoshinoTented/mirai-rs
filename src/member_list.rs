@@ -2,9 +2,9 @@
 //!
 
 use crate::session::Session;
-use crate::message::{Group, GroupMember, FriendMember};
 use crate::error::{Result};
 use serde::de::DeserializeOwned;
+use crate::message::element::{FriendMember, Group, GroupMember};
 
 impl Session {
     async fn get_list<D>(&self, name: &'static str) -> Result<Vec<D>> where
