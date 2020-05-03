@@ -1,11 +1,10 @@
 //! You can use [`fetch_newest_message`] (or other similar function) to get a message from the server,
-//! or use [`send_group_message`] (or other similar function) to send a message to someone by the server.
+//! or use [`send_message`] to send a message to someone by the server.
 //!
 //! ## The Message Structure
 //!
 //! [`Message`] is a struct contains the message what you want to send, it has following fields:
 //!
-//! * target: The message target, in other words, is who you want to send to.
 //! * quote: [`quote`] is an optional property, if you want to reply to someone, you can use [`quote`].
 //! * message_chain: Message chain is the content of a [`Message`], it contains [`SingleMessage`]s, we will introduce it below
 //!
@@ -15,8 +14,8 @@
 //!
 //! * Source: It contains a message-id and timestamp, but in common you don't need to use it, it only returns from the server.
 //! * Plain: It contains plain text, [`Plain`] message is common, and most frequently uses.
-//! * Quote: It is similar to [`Source`] variant, it means this message quoted another message, and only returns from the server.
-//! * At: You can use [`At`] variant when you want this message notice somebody, the `display` property is how this [`At`] message displays.
+//! * Quote: It is similar to [`Source`] variant, only returns from the server. It means this message quoted another message.
+//! * At: You can use [`At`] variant when you want this message notice somebody, the [`display`] property is how this [`At`] message displays.
 //! * Image | FlashImage: [`Image`] and [`FlashImage`] are similar, they both send an image message, but [`FlashImage`] has a time limitation.
 //!                       Both of them have three property: [`image_id`], [`url`] and [`path`],
 //!                       [`image_id`] is the id of an image which saved in Tencent server,
@@ -46,26 +45,17 @@
 //! use mirai::message::MessageBuilder;
 //!
 //! let message = MessageBuilder::new()
-//!                 .target(sender.group.id)
-//!                 .quote(message_id)
 //!                 .append_message("Hello".into())
 //!                 .build();
 //! ```
 //!
-//! You can also build a [`MessageBuilder`] from [`Group`] or [`FriendMember`]:
+//! ## MessageChannel
 //!
-//! ```rust
-//! use mirai::message::{MessageBuilder, Group, CanBuildMessage};
+//! To send a message to others, you need to specify a channel which the message send to. There are three channel you can use:
 //!
-//! let group: Group = some_group;
-//! let message = group.build_message()
-//!                    .append_message("Hi!".into())
-//!                    .build();
-//! ```
-//!
-//! When invoking [`MessageBuilder::build`] function, you may need to confirm whether a is set or message chain is empty.
-//! Because [`build`] function will inspect [`target`] and [`message_chain`] property, if [`target`] is None, or [`message_chain`] is empty,
-//! [`build`] will return an error.
+//! * Group: send a message to a group
+//! * Friend: send a message to a friend
+//! * Temp: send a message to a group member
 //!
 
 use serde::{Serialize, Deserialize};
@@ -73,7 +63,7 @@ use serde::export::fmt::Debug;
 
 use crate::{Target, Code};
 use crate::session::Session;
-use crate::error::{Result, assert, ImpossibleError, MiraiError};
+use crate::error::{Result, assert, ImpossibleError, ClientError};
 
 pub type MessageChain = Vec<SingleMessage>;
 pub type MessageId = i64;
@@ -166,7 +156,7 @@ pub enum MessagePackage {
     },
 
     #[serde(other)]
-    Unsupported
+    Unsupported,
 }
 
 #[serde(tag = "type")]
@@ -219,7 +209,7 @@ pub enum SingleMessage {
     },
 
     #[serde(other)]
-    Unsupported
+    Unsupported,
 }
 
 impl From<String> for SingleMessage {
@@ -260,18 +250,103 @@ pub struct Group {
     pub permission: Permission,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone)]
+pub enum MessageChannel {
+    Friend(Target),
+    Group(Target),
+    Temp { qq: Target, group: Target },
+}
+
+impl MessageChannel {
+    pub fn group(self) -> Result<Target> {
+        if let MessageChannel::Group(group) = self {
+            Ok(group)
+        } else {
+            Err(ClientError("Expect Group Target".to_string()))
+        }
+    }
+
+    pub fn friend(self) -> Result<Target> {
+        if let MessageChannel::Friend(friend) = self {
+            Ok(friend)
+        } else {
+            Err(ClientError("Expect Friend Target".to_string()))
+        }
+    }
+
+    /// returns (qq, group)
+    pub fn temp(self) -> Result<(Target, Target)> {
+        if let MessageChannel::Temp { qq, group } = self {
+            Ok((qq, group))
+        } else {
+            Err(ClientError("Expect Temp Target".to_string()))
+        }
+    }
+}
+
+pub trait AsGroupChannel {
+    fn as_group_channel(&self) -> MessageChannel;
+}
+
+pub trait AsFriendChannel {
+    fn as_friend_channel(&self) -> MessageChannel;
+}
+
+pub trait AsTempChannel {
+    fn as_temp_channel(&self) -> MessageChannel;
+}
+
+impl AsGroupChannel for Target {
+    fn as_group_channel(&self) -> MessageChannel {
+        MessageChannel::Group(self.clone())
+    }
+}
+
+impl AsFriendChannel for Target {
+    fn as_friend_channel(&self) -> MessageChannel {
+        MessageChannel::Friend(self.clone())
+    }
+}
+
+impl AsTempChannel for (Target, Target) {
+    fn as_temp_channel(&self) -> MessageChannel {
+        MessageChannel::Temp { qq: self.0, group: self.1 }
+    }
+}
+
+impl AsFriendChannel for GroupMember {
+    fn as_friend_channel(&self) -> MessageChannel {
+        self.id.as_friend_channel()
+    }
+}
+
+impl AsTempChannel for GroupMember {
+    fn as_temp_channel(&self) -> MessageChannel {
+        (self.id, self.group.id).as_temp_channel()
+    }
+}
+
+impl AsGroupChannel for Group {
+    fn as_group_channel(&self) -> MessageChannel {
+        self.id.as_group_channel()
+    }
+}
+
+impl AsFriendChannel for FriendMember {
+    fn as_friend_channel(&self) -> MessageChannel {
+        self.id.as_friend_channel()
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Message {
-    pub target: Target,
     pub quote: Option<MessageId>,
-    #[serde(rename = "messageChain")]
     pub message_chain: Vec<SingleMessage>,
 }
 
 impl Message {
-    pub fn new(target: Target, quote: Option<MessageId>, message_chain: &Vec<SingleMessage>) -> Message {
+    pub fn new(quote: Option<MessageId>, message_chain: &Vec<SingleMessage>) -> Message {
         Message {
-            target,
             quote,
             message_chain: message_chain.to_vec(),
         }
@@ -287,42 +362,8 @@ impl From<MessageBuilder> for Message {
 // -------------------------------------------------- Message Builder
 #[derive(Debug, Clone)]
 pub struct MessageBuilder {
-    target: Option<Target>,
     quote: Option<MessageId>,
     message_chain: Vec<SingleMessage>,
-}
-
-impl CanBuildMessage for Group {
-    fn build_message(&self) -> MessageBuilder {
-        MessageBuilder::new().target(self.id)
-    }
-}
-
-impl CanBuildMessage for FriendMember {
-    fn build_message(&self) -> MessageBuilder {
-        MessageBuilder::new().target(self.id)
-    }
-}
-
-impl CanBuildMessage for MessageBuilder {
-    fn build_message(&self) -> MessageBuilder {
-        if let None = self.target {
-            Err(MiraiError::MessageBuildingError("Message need a target!")).unwrap()
-        }
-
-        self.clone()
-    }
-}
-
-
-/// # CanBuildMessage Trait
-///
-/// ## build_message
-///
-/// this function will returns a `MessageBuilder` which `target` field is not None
-///
-pub trait CanBuildMessage {
-    fn build_message(&self) -> MessageBuilder;
 }
 
 /// # MessageBuilder
@@ -335,15 +376,9 @@ pub trait CanBuildMessage {
 impl MessageBuilder {
     pub fn new() -> MessageBuilder {
         MessageBuilder {
-            target: None,
             quote: None,
             message_chain: Vec::new(),
         }
-    }
-
-    pub fn target(mut self, target: Target) -> MessageBuilder {
-        self.target = Some(target);
-        self
     }
 
     pub fn append_message(mut self, msg: SingleMessage) -> MessageBuilder {
@@ -357,18 +392,9 @@ impl MessageBuilder {
     }
 
     pub fn build(self) -> Result<Message> {
-        let target = self.target.ok_or(MiraiError::MessageBuildingError("Message need a target!"))?;
-        let quote = self.quote;
-        let message_chain = self.message_chain;
-
-        if message_chain.is_empty() {
-            return Err(MiraiError::MessageBuildingError("Message has no content!"));
-        }
-
         Ok(Message {
-            target,
-            quote,
-            message_chain,
+            quote: self.quote,
+            message_chain: self.message_chain,
         })
     }
 }
@@ -394,7 +420,36 @@ struct SendMsgResponse {
 }
 
 impl Session {
-    async fn send_message<'req>(&self, message_type: &str, req: RichSendMsgRequest<'req>) -> Result<u64> {
+    pub async fn send_message(&self, channel: &MessageChannel, message: &Message) -> Result<u64> {
+        let mut req = RichSendMsgRequest {
+            session_key: self.key.clone(),
+            qq: None,
+            group: None,
+            quote: message.quote,
+            message_chain: &message.message_chain,
+        };
+
+        let message_type = match channel {
+            MessageChannel::Group(group) => {
+                req.group = Some(*group);
+
+                "Group"
+            }
+
+            MessageChannel::Friend(friend) => {
+                req.qq = Some(*friend);
+
+                "Friend"
+            }
+
+            MessageChannel::Temp { qq, group } => {
+                req.qq = Some(*qq);
+                req.group = Some(*group);
+
+                "Temp"
+            }
+        };
+
         let resp: SendMsgResponse = self.client.post(&self.url(&format!("/send{}Message", message_type)))
             .json(&req).send().await?
             .json().await?;
@@ -402,36 +457,6 @@ impl Session {
         assert(resp.code, "Sending")?;
 
         resp.message_id.ok_or(ImpossibleError("messageId is None".to_string()))
-    }
-
-    pub async fn send_group_message(&self, message: &Message) -> Result<u64> {
-        self.send_message("Group", RichSendMsgRequest {
-            session_key: self.key.clone(),
-            qq: None,
-            group: Some(message.target),
-            quote: message.quote,
-            message_chain: &message.message_chain,
-        }).await
-    }
-
-    pub async fn send_friend_message(&self, message: &Message) -> Result<u64> {
-        self.send_message("Friend", RichSendMsgRequest {
-            session_key: self.key.clone(),
-            qq: Some(message.target),
-            group: None,
-            quote: message.quote,
-            message_chain: &message.message_chain,
-        }).await
-    }
-
-    pub async fn send_temp_message(&self, group: Target, message: &Message) -> Result<u64> {
-        self.send_message("Temp", RichSendMsgRequest {
-            session_key: self.key.clone(),
-            qq: Some(message.target),
-            group: Some(group),
-            quote: message.quote,
-            message_chain: &message.message_chain,
-        }).await
     }
 }
 

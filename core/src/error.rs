@@ -2,18 +2,19 @@ use reqwest::Error as ReqError;
 use std::fmt::Formatter;
 use crate::Code;
 
-pub use MiraiError::CodeError;
+pub use MiraiError::ServerError;
 pub use MiraiError::HttpError;
 pub use MiraiError::ImpossibleError;
+pub use MiraiError::ClientError;
 
 pub type Result<T> = std::result::Result<T, MiraiError>;
 
 #[derive(Debug)]
 pub enum MiraiError {
-    CodeError(Code, String),
+    ServerError(Code, String),
     ImpossibleError(String),
     HttpError(ReqError),
-    MessageBuildingError(&'static str),
+    ClientError(String),
 }
 
 const SUCCESS: Code = 0;
@@ -45,16 +46,16 @@ pub(crate) fn assert(code: Code, action: &str) -> Result<()> {
         _ => "Unknown code"
     };
 
-    Err(MiraiError::CodeError(code, format!("[{}] {}", action, msg)))
+    Err(MiraiError::ServerError(code, format!("[{}] {}", action, msg)))
 }
 
 impl std::fmt::Display for MiraiError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         match self {
-            MiraiError::CodeError(code, s) => f.write_str(&format!("{}: {}", code, s)),
+            MiraiError::ServerError(code, s) => f.write_str(&format!("{}: {}", code, s)),
             MiraiError::ImpossibleError(s) => f.write_str(&format!("{}", s)),
             MiraiError::HttpError(e) => f.write_str(&e.to_string()),
-            MiraiError::MessageBuildingError(e) => f.write_str(e),
+            MiraiError::ClientError(e) => f.write_str(e),
         }
     }
 }
