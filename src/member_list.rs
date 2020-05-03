@@ -2,7 +2,7 @@
 //!
 
 use crate::session::Session;
-use crate::error::{Result};
+use crate::error::Result;
 use serde::de::DeserializeOwned;
 use crate::message::element::{FriendMember, Group, GroupMember};
 

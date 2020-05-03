@@ -1,6 +1,6 @@
 //! You can use some function in this mod to receive message or event with a session
 
-use serde::{Serialize, Deserialize};
+use serde::Deserialize;
 
 use crate::Code;
 use crate::session::Session;

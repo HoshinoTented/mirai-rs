@@ -11,7 +11,7 @@
 //!
 //! Other event variant information can found in [this](https://github.com/mamoe/mirai-api-http/blob/master/EventType.md).
 
-use serde::{Serialize, Deserialize};
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::Target;
