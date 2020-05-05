@@ -91,10 +91,10 @@ impl From<&str> for SingleMessage {
 impl ToString for SingleMessage {
     fn to_string(&self) -> String {
         match self {
-            SingleMessage::Source { id, time } => format!("[mirai:source:{}]", id),
+            SingleMessage::Source { id, time: _ } => format!("[mirai:source:{}]", id),
             SingleMessage::Plain { text } => text.clone(),
-            SingleMessage::Quote { id, group_id, sender_id, target_id, origin } => format!("[mirai:quote:{}]", id),
-            SingleMessage::At { target, display } => format!("[mirai:at:{}]", target),
+            SingleMessage::Quote { id, group_id: _, sender_id: _, target_id: _, origin: _ } => format!("[mirai:quote:{}]", id),
+            SingleMessage::At { target, display: _ } => format!("[mirai:at:{}]", target),
             SingleMessage::Image { .. } => "[Image]".to_string(),
             SingleMessage::FlashImage { .. } => "[FlashImage]".to_string(),
             SingleMessage::Xml { xml } => format!("[mirai:xml:{}]", xml),
