@@ -87,3 +87,21 @@ impl From<&str> for SingleMessage {
         SingleMessage::from(str.to_string())
     }
 }
+
+impl ToString for SingleMessage {
+    fn to_string(&self) -> String {
+        match self {
+            SingleMessage::Source { id, time } => format!("[mirai:source:{}]", id),
+            SingleMessage::Plain { text } => text.clone(),
+            SingleMessage::Quote { id, group_id, sender_id, target_id, origin } => format!("[mirai:quote:{}]", id),
+            SingleMessage::At { target, display } => format!("[mirai:at:{}]", target),
+            SingleMessage::Image { .. } => "[Image]".to_string(),
+            SingleMessage::FlashImage { .. } => "[FlashImage]".to_string(),
+            SingleMessage::Xml { xml } => format!("[mirai:xml:{}]", xml),
+            SingleMessage::Json { json } => format!("[mirai:json:{}]", json),
+            SingleMessage::App { content } => format!("[mirai:app:{}]", content),
+            SingleMessage::Poke { name } => format!("[mirai:poke:{}]", name),
+            SingleMessage::Unsupported => format!("{:?}", SingleMessage::Unsupported),
+        }
+    }
+}

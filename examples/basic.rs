@@ -14,14 +14,16 @@ async fn main() {
     let server = MiraiServer::new("http://localhost:8080");
 
     loop {
+        println!("Try to connecting to server: {}", server.base_url);
+
         match server.about().await {
             Err(_) => {
-                println!("Cannot connect to server, try to reconnect...");
+                println!("Failed, try to reconnect...");
                 std::thread::sleep(Duration::from_secs(1));
             }
 
             Ok(resp) => {
-                println!("Mirai Server Version: {}", resp.data.version);
+                println!("Success. Mirai Server Version: {}", resp.data.version);
                 break;
             }
         }
@@ -31,12 +33,12 @@ async fn main() {
     let mut id = String::new();
 
     println!("Please input auth key: ");
-    stdin().read_line(&mut auth_key).expect("input error");
+    stdin().read_line(&mut auth_key).unwrap();
     let session = server.auth(auth_key.trim()).await.unwrap();
-    println!("Authorize Successful.");
+    println!("Authorizing Successful.");
 
     println!("Please input qq id: ");
-    stdin().read_line(&mut id).expect("input error");
+    stdin().read_line(&mut id).unwrap();
     session.verify(id.trim().parse().expect("wrong qq id format")).await.unwrap();
 
     println!("Done: {:?}", session);
@@ -126,12 +128,6 @@ async fn main() {
                 }
                 _ => {}
             };
-
-            let config = session.get_group_config(sender.group().id()).await.unwrap();
-            let info = session.get_member_info(sender.group().id(), sender.id()).await.unwrap();
-
-            println!("{:?}", config);
-            println!("{:?}", info);
         }
 
         println!("{:?}", mp);
