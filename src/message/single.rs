@@ -31,13 +31,11 @@ pub enum SingleMessage {
     Plain {
         text: String
     },
+    #[serde(rename_all = "camelCase")]
     Quote {
         id: MessageId,
-        #[serde(rename = "groupId")]
         group_id: Target,
-        #[serde(rename = "senderId")]
         sender_id: Target,
-        #[serde(rename = "targetId")]
         target_id: Target,
         origin: MessageChain,
     },
@@ -45,14 +43,14 @@ pub enum SingleMessage {
         target: Target,
         display: String,
     },
+    #[serde(rename_all = "camelCase")]
     Image {
-        #[serde(rename = "imageId")]
         image_id: Option<String>,
         url: Option<String>,
         path: Option<String>,
     },
+    #[serde(rename_all = "camelCase")]
     FlashImage {
-        #[serde(rename = "imageId")]
         image_id: Option<String>,
         url: Option<String>,
         path: Option<String>,

@@ -30,8 +30,12 @@ pub mod channel;
 pub mod send;
 pub mod receive;
 
-use crate::message::single::SingleMessage;
 use crate::error::Result;
+
+pub use channel::MessageChannel;
+pub use single::SingleMessage;
+pub use event::EventPacket;
+pub use element::{Group, GroupMember, FriendMember};
 
 pub type MessageChain = Vec<SingleMessage>;
 pub type MessageId = i64;
