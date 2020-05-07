@@ -3,32 +3,30 @@
 use serde::{Serialize, Deserialize};
 
 use crate::{Target, Code};
-use crate::message::{MessageId, MessageChain, Message};
+use crate::message::{MessageID, MessageChain, Message};
 use crate::session::Session;
 use crate::message::channel::MessageChannel;
 use crate::error::{Result, assert, ImpossibleError};
 
+#[serde(rename_all = "camelCase")]
 #[derive(Serialize)]
 struct SendMsgRequest<'mc> {
-    #[serde(rename = "sessionKey")]
     session_key: String,
     qq: Option<Target>,
     group: Option<Target>,
-    quote: Option<MessageId>,
-    #[serde(rename = "messageChain")]
+    quote: Option<MessageID>,
     message_chain: &'mc MessageChain,
 }
 
+#[serde(rename_all = "camelCase")]
 #[derive(Deserialize)]
 struct SendMsgResponse {
     code: Code,
-    //            msg: String,
-    #[serde(rename = "messageId")]
-    message_id: Option<u64>,
+    message_id: Option<MessageID>,
 }
 
 impl Session {
-    pub async fn send_message(&self, channel: &MessageChannel, message: &Message) -> Result<u64> {
+    pub async fn send_message(&self, channel: &MessageChannel, message: &Message) -> Result<MessageID> {
         let mut req = SendMsgRequest {
             session_key: self.key.clone(),
             qq: None,

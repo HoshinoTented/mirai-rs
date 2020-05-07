@@ -18,14 +18,14 @@
 
 use serde::{Serialize, Deserialize};
 
-use crate::message::{MessageId, TimeStamp, MessageChain};
+use crate::message::{MessageID, TimeStamp, MessageChain};
 use crate::Target;
 
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum SingleMessage {
     Source {
-        id: MessageId,
+        id: MessageID,
         time: TimeStamp,
     },
     Plain {
@@ -33,7 +33,7 @@ pub enum SingleMessage {
     },
     #[serde(rename_all = "camelCase")]
     Quote {
-        id: MessageId,
+        id: MessageID,
         group_id: Target,
         sender_id: Target,
         target_id: Target,

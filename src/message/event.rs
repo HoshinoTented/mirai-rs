@@ -15,7 +15,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::Target;
-use crate::message::{MessageChain, MessageId, TimeStamp};
+use crate::message::{MessageChain, MessageID, TimeStamp};
 use crate::message::element::{GroupMember, FriendMember, Group};
 
 #[serde(tag = "type")]
@@ -41,7 +41,7 @@ pub enum RecallEvent {
         #[serde(rename = "authorId")]
         author_id: Target,
         #[serde(rename = "messageId")]
-        message_id: MessageId,
+        message_id: MessageID,
         time: TimeStamp,
         group: Group,
         operator: Option<GroupMember>,          // Bot is operator if this field is None, the same as below
@@ -50,7 +50,7 @@ pub enum RecallEvent {
         #[serde(rename = "authorId")]
         author_id: Target,
         #[serde(rename = "messageId")]
-        message_id: MessageId,
+        message_id: MessageID,
         time: TimeStamp,
         operator: Target,
     },

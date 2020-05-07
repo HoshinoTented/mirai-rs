@@ -38,17 +38,17 @@ pub use event::EventPacket;
 pub use element::{Group, GroupMember, FriendMember};
 
 pub type MessageChain = Vec<SingleMessage>;
-pub type MessageId = i64;
+pub type MessageID = i64;
 pub type TimeStamp = u64;
 
 #[derive(Debug, Clone)]
 pub struct Message {
-    pub quote: Option<MessageId>,
+    pub quote: Option<MessageID>,
     pub message_chain: Vec<SingleMessage>,
 }
 
 impl Message {
-    pub fn new(quote: Option<MessageId>, message_chain: &Vec<SingleMessage>) -> Message {
+    pub fn new(quote: Option<MessageID>, message_chain: &Vec<SingleMessage>) -> Message {
         Message {
             quote,
             message_chain: message_chain.to_vec(),
@@ -64,7 +64,7 @@ impl From<MessageBuilder> for Message {
 
 #[derive(Debug, Clone)]
 pub struct MessageBuilder {
-    quote: Option<MessageId>,
+    quote: Option<MessageID>,
     message_chain: Vec<SingleMessage>,
 }
 
@@ -88,7 +88,7 @@ impl MessageBuilder {
         self
     }
 
-    pub fn quote(mut self, quote: MessageId) -> MessageBuilder {
+    pub fn quote(mut self, quote: MessageID) -> MessageBuilder {
         self.quote = Some(quote);
         self
     }
