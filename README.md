@@ -17,6 +17,8 @@ mirai_rs = "<the version which you need>"
 
 The newest version is: [![crates](https://img.shields.io/crates/v/mirai_rs)](https://crates.io/crates/mirai_rs).
 
+The mirai-api-http version which current supports: `1.6.4`
+
 mirai_rs is still unstable, so we recommend you use the newest version that avoid some bugs ~~(and get more new bugs)~~.
 
 ## More information
