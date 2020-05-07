@@ -44,7 +44,7 @@ pub enum RecallEvent {
         message_id: MessageId,
         time: TimeStamp,
         group: Group,
-        operator: GroupMember,
+        operator: Option<GroupMember>,          // Bot is operator if this field is None, the same as below
     },
     FriendRecallEvent {
         #[serde(rename = "authorId")]
@@ -128,7 +128,7 @@ pub struct GroupChangeEvent {
     #[serde(flatten)]
     change: ChangeType,
     group: Group,
-    operator: GroupMember,
+    operator: Option<GroupMember>,
 }
 
 #[serde(untagged)]
