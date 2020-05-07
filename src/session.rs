@@ -129,6 +129,29 @@ impl MiraiServer {
             key: result.session.ok_or(ImpossibleError("session is None".to_string()))?,
         })
     }
+
+    pub async fn run_command(&self, auth_key: &str, command: &str, args: &[&str]) -> Result<String> {
+        #[serde(rename_all = "camelCase")]
+        #[derive(Serialize)]
+        struct Request<'s> {
+            auth_key: &'s str,
+            name: &'s str,
+            args: &'s [&'s str],
+        }
+
+        let req = Request {
+            auth_key,
+            name: command,
+            args,
+        };
+
+        let client = Client::new();
+        let text = client.post(&self.url("/command/send"))
+            .json(&req).send().await?
+            .text().await?;
+
+        Ok(text)
+    }
 }
 
 impl Session {

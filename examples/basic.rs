@@ -29,19 +29,21 @@ async fn main() {
         }
     }
 
-    let mut auth_key = String::new();
-    let mut id = String::new();
+    let session = {
+        let mut auth_key = String::new();
+        let mut id = String::new();
 
-    println!("Please input auth key: ");
-    stdin().read_line(&mut auth_key).unwrap();
-    let session = server.auth(auth_key.trim()).await.unwrap();
-    println!("Authorizing Successful.");
+        println!("Please input auth key: ");
+        stdin().read_line(&mut auth_key).unwrap();
+        let session = server.auth(auth_key.trim()).await.unwrap();
+        println!("Done: {:?}", session);
 
-    println!("Please input qq id: ");
-    stdin().read_line(&mut id).unwrap();
-    session.verify(id.trim().parse().expect("wrong qq id format")).await.unwrap();
+        println!("Please input qq id: ");
+        stdin().read_line(&mut id).unwrap();
+        session.verify(id.trim().parse().expect("wrong qq id format")).await.unwrap();
 
-    println!("Done: {:?}", session);
+        session
+    };
 
     let (sc, rc) = mpsc::channel();
     let session = Arc::new(session);
