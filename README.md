@@ -12,7 +12,7 @@ A mirai-client implemented in Rust.
 Add following code in your `Cargo.toml`.
 
 ```toml
-mirai_rs = "0.1.0"
+mirai_rs = "0.1.1"
 ```
 
 The newest version is: [![crates](https://img.shields.io/crates/v/mirai_rs)](https://crates.io/crates/mirai_rs).
