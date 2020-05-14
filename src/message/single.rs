@@ -8,6 +8,8 @@
 //! * Plain: It contains plain text, [`Plain`] message is common, and most frequently uses.
 //! * Quote: It is similar to [`Source`] variant, only returns from the server. It means this message quoted another message.
 //! * At: You can use [`At`] variant when you want this message notice somebody, the [`display`] property is how this [`At`] message displays.
+//! * AtAll: This message can only be received from a group.
+//! * Face: A face (aka expression) message element, if you want to construct it, you need provide at least one of [face_id] or [name].
 //! * Image | FlashImage: [`Image`] and [`FlashImage`] are similar, they both send an image message, but [`FlashImage`] has a time limitation.
 //!                       Both of them have three property: [`image_id`], [`url`] and [`path`],
 //!                       [`image_id`] is the id of an image which saved in Tencent server,
@@ -42,6 +44,12 @@ pub enum SingleMessage {
     At {
         target: Target,
         display: String,
+    },
+    AtAll,
+    #[serde(rename_all = "camelCase")]
+    Face {
+        face_id: Option<i32>,
+        name: Option<String>,
     },
     #[serde(rename_all = "camelCase")]
     Image {
@@ -100,6 +108,18 @@ impl ToString for SingleMessage {
             SingleMessage::App { content } => format!("[mirai:app:{}]", content),
             SingleMessage::Poke { name } => format!("[mirai:poke:{}]", name),
             SingleMessage::Unsupported => format!("{:?}", SingleMessage::Unsupported),
+            SingleMessage::AtAll => "[mirai:atall]".to_string(),
+            SingleMessage::Face { face_id, name } => {
+                let s = if let Some(id) = face_id {
+                    id.to_string()
+                } else if let Some(name) = name {
+                    name.clone()
+                } else {
+                    panic!("id == None && name == None");
+                };
+
+                format!("[mirai:face:{}]", s)
+            }
         }
     }
 }
