@@ -38,5 +38,3 @@ pub async fn connect() -> Session {
 
     session
 }
-
-fn main() {}

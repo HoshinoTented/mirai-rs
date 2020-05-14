@@ -56,9 +56,9 @@ fn subscribe_filter(bus: Bus, predicate: fn(&EventPacket) -> bool) -> SubscribeF
     subscribe(bus).into_iter().filter(predicate)
 }
 
-fn subscribe_group_message(bus: Bus) -> SubscribeFilter {
+fn subscribe_friend_message(bus: Bus) -> SubscribeFilter {
     subscribe_filter(bus, |e| {
-        if let EventPacket::MessageEvent(MessageEvent::GroupMessage { .. }) = e {
+        if let EventPacket::MessageEvent(MessageEvent::FriendMessage { .. }) = e {
             true
         } else {
             false
@@ -71,7 +71,7 @@ async fn main() {
     let session = Arc::new(connect().await);
     let bus = init_subscribe(session);
 
-    let rc = subscribe_group_message(bus);
+    let rc = subscribe_friend_message(bus);
 
     for packet in rc {
         println!("{:?}", packet);
