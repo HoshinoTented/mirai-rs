@@ -1,52 +1,20 @@
-use std::io::stdin;
+mod connect;
+
 use std::sync::{mpsc, Arc};
 use std::time::Duration;
 
-use mirai::session::MiraiServer;
 use mirai::message::event::{EventPacket, MessageEvent};
 use mirai::message::single::SingleMessage;
 use mirai::message::channel::{AsGroupChannel, AsTempChannel};
 use mirai::message::MessageBuilder;
 use mirai::message::element::Permission;
 
+use connect::connect;
+
 #[tokio::main]
 async fn main() {
-    let server = MiraiServer::new("http://localhost:8080");
-
-    loop {
-        println!("Try to connecting to server: {}", server.base_url);
-
-        match server.about().await {
-            Err(_) => {
-                println!("Failed, try to reconnect...");
-                std::thread::sleep(Duration::from_secs(1));
-            }
-
-            Ok(resp) => {
-                println!("Success. Mirai Server Version: {}", resp.data.version);
-                break;
-            }
-        }
-    }
-
-    let session = {
-        let mut auth_key = String::new();
-        let mut id = String::new();
-
-        println!("Please input auth key: ");
-        stdin().read_line(&mut auth_key).unwrap();
-        let session = server.auth(auth_key.trim()).await.unwrap();
-        println!("Done: {:?}", session);
-
-        println!("Please input qq id: ");
-        stdin().read_line(&mut id).unwrap();
-        session.verify(id.trim().parse().expect("wrong qq id format")).await.unwrap();
-
-        session
-    };
-
     let (sc, rc) = mpsc::channel();
-    let session = Arc::new(session);
+    let session = Arc::new(connect().await);
 
     {
         let session = session.clone();
