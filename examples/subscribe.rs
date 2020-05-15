@@ -10,23 +10,67 @@ use std::iter::Filter;
 
 type Bus = Arc<Mutex<Vec<Sender<EventPacket>>>>;
 
-fn init_subscribe(session: Arc<Session>) -> Bus {
-    let subscribers: Bus = Arc::new(Mutex::new(Vec::new()));
+struct EventHandler<P> {
+    sender: Sender<EventPacket>,
+    predicate: P,
+}
+
+impl<P> EventHandler<P> {
+    pub fn new(predicate: P) -> (EventHandler<P>, Receiver<EventPacket>) {
+        let (sc, rc) = channel();
+
+        let handler = EventHandler {
+            sender: sc,
+            predicate,
+        };
+
+        (handler, rc)
+    }
+}
+
+struct EventBus<P> {
+    bus: Vec<EventHandler<P>>
+}
+
+impl<P> EventBus<P> {
+    pub fn new() -> EventBus<P> {
+        EventBus {
+            bus: Vec::new()
+        }
+    }
+
+    pub fn register(&mut self, handler: EventHandler<P>) {
+        self.bus.push(handler);
+    }
+
+    pub fn subscribe(&mut self, predicate: P) -> Receiver<EventPacket> {
+        let (handler, rc) = EventHandler::new(predicate);
+        self.register(handler);
+
+        rc
+    }
+}
+
+fn init_subscribe<P>(session: Arc<Session>) -> Arc<Mutex<EventBus<P>>>
+    where P: FnMut(&EventPacket) -> bool + Send + 'static {
+    let subscribers = Arc::new(Mutex::new(EventBus::<P>::new()));
 
     {
         let subscribers = subscribers.clone();
         let _job = tokio::spawn(async move {
             loop {
-                let mps = session.fetch_newest_message(1).await;
+                let events = session.fetch_newest_message(1).await;
 
-                match mps {
-                    Ok(mps) => {
-                        let first = mps.into_iter().next();
-                        if let Some(mp) = first {
-                            let subscribers = subscribers.lock().unwrap();
+                match events {
+                    Ok(events) => {
+                        let first = events.into_iter().next();
+                        if let Some(event) = first {
+                            let mut subscribers = subscribers.lock().unwrap();
 
-                            for subscriber in subscribers.iter() {
-                                subscriber.send(mp.clone());            // TODO: use Result
+                            for subscriber in subscribers.bus.iter_mut() {
+                                if (subscriber.predicate)(&event) {
+                                    subscriber.sender.send(event.clone());      // TODO: use Result
+                                }
                             }
                         }
                     }
@@ -40,38 +84,20 @@ fn init_subscribe(session: Arc<Session>) -> Bus {
     subscribers
 }
 
-fn subscribe(bus: Bus) -> Receiver<EventPacket> {
-    let (sc, rc) = channel();
-
-    let mut bus = bus.lock().unwrap();
-
-    bus.push(sc);
-
-    rc
-}
-
-type SubscribeFilter = Filter<IntoIter<EventPacket>, fn(&EventPacket) -> bool>;
-
-fn subscribe_filter(bus: Bus, predicate: fn(&EventPacket) -> bool) -> SubscribeFilter {
-    subscribe(bus).into_iter().filter(predicate)
-}
-
-fn subscribe_friend_message(bus: Bus) -> SubscribeFilter {
-    subscribe_filter(bus, |e| {
-        if let EventPacket::MessageEvent(MessageEvent::FriendMessage { .. }) = e {
-            true
-        } else {
-            false
-        }
-    })
-}
-
 #[tokio::main]
 async fn main() {
     let session = Arc::new(connect().await);
-    let bus = init_subscribe(session);
+    let bus = init_subscribe::<fn(&EventPacket) -> bool>(session);
 
-    let rc = subscribe_friend_message(bus);
+    let rc = {
+        let mut bus = bus.lock().unwrap();
+
+        bus.subscribe(|event| if let EventPacket::MessageEvent(MessageEvent::FriendMessage { .. }) = event {
+            true
+        } else {
+            false
+        })
+    };
 
     for packet in rc {
         println!("{:?}", packet);
