@@ -2,11 +2,12 @@ mod connect;
 
 use connect::connect;
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{Sender, Receiver, channel, IntoIter};
+use std::sync::mpsc::{Sender, Receiver, channel};
 use mirai::message::EventPacket;
 use mirai::message::event::MessageEvent;
 use mirai::session::Session;
 use std::iter::Filter;
+use std::ops::{DerefMut, Deref};
 
 type Bus = Arc<Mutex<Vec<Sender<EventPacket>>>>;
 
@@ -51,7 +52,7 @@ impl<P> EventBus<P> {
     }
 }
 
-fn init_subscribe<P>(session: Arc<Session>) -> Arc<Mutex<EventBus<P>>>
+fn new_subscribe<P>(session: Arc<Session>) -> Arc<Mutex<EventBus<P>>>
     where P: FnMut(&EventPacket) -> bool + Send + 'static {
     let subscribers = Arc::new(Mutex::new(EventBus::<P>::new()));
 
@@ -87,7 +88,7 @@ fn init_subscribe<P>(session: Arc<Session>) -> Arc<Mutex<EventBus<P>>>
 #[tokio::main]
 async fn main() {
     let session = Arc::new(connect().await);
-    let bus = init_subscribe::<fn(&EventPacket) -> bool>(session);
+    let bus = new_subscribe::<fn(&EventPacket) -> bool>(session);
 
     let rc = {
         let mut bus = bus.lock().unwrap();
