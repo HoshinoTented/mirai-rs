@@ -9,6 +9,10 @@ homepage = "https://github.com/HoshinoTented/mirai-rs"
 repository = "https://github.com/HoshinoTented/mirai-rs"
 readme = "README.md"
 
+exclude = [
+    ".circleci/*"
+]
+
 [dependencies]
 reqwest = { version = "0.10.4", features = ["blocking", "json"] }
 serde_json = "1.0"
