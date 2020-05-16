@@ -44,11 +44,11 @@ pub type TimeStamp = u64;
 #[derive(Debug, Clone)]
 pub struct Message {
     pub quote: Option<MessageID>,
-    pub message_chain: Vec<SingleMessage>,
+    pub message_chain: MessageChain,
 }
 
 impl Message {
-    pub fn new(quote: Option<MessageID>, message_chain: &Vec<SingleMessage>) -> Message {
+    pub fn new(quote: Option<MessageID>, message_chain: &MessageChain) -> Message {
         Message {
             quote,
             message_chain: message_chain.to_vec(),
@@ -65,7 +65,7 @@ impl From<MessageBuilder> for Message {
 #[derive(Debug, Clone)]
 pub struct MessageBuilder {
     quote: Option<MessageID>,
-    message_chain: Vec<SingleMessage>,
+    message_chain: MessageChain,
 }
 
 /// # MessageBuilder
