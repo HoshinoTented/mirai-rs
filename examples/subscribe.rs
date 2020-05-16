@@ -6,10 +6,7 @@ use std::sync::mpsc::{Sender, Receiver, channel};
 use mirai::message::EventPacket;
 use mirai::message::event::MessageEvent;
 use mirai::session::Session;
-use std::iter::Filter;
-use std::ops::{DerefMut, Deref};
-
-type Bus = Arc<Mutex<Vec<Sender<EventPacket>>>>;
+use std::collections::vec_deque::VecDeque;
 
 struct EventHandler<P> {
     sender: Sender<EventPacket>,
@@ -17,35 +14,33 @@ struct EventHandler<P> {
 }
 
 impl<P> EventHandler<P> {
-    pub fn new(predicate: P) -> (EventHandler<P>, Receiver<EventPacket>) {
-        let (sc, rc) = channel();
-
-        let handler = EventHandler {
+    pub fn new(sc: Sender<EventPacket>, predicate: P) -> EventHandler<P> {
+        EventHandler {
             sender: sc,
             predicate,
-        };
-
-        (handler, rc)
+        }
     }
 }
 
 struct EventBus<P> {
-    bus: Vec<EventHandler<P>>
+    bus: VecDeque<EventHandler<P>>
 }
 
 impl<P> EventBus<P> {
     pub fn new() -> EventBus<P> {
         EventBus {
-            bus: Vec::new()
+            bus: VecDeque::new()
         }
     }
 
     pub fn register(&mut self, handler: EventHandler<P>) {
-        self.bus.push(handler);
+        self.bus.push_back(handler)
     }
 
     pub fn subscribe(&mut self, predicate: P) -> Receiver<EventPacket> {
-        let (handler, rc) = EventHandler::new(predicate);
+        let (sc, rc) = channel();
+        let handler = EventHandler::new(sc, predicate);
+
         self.register(handler);
 
         rc
@@ -67,12 +62,17 @@ fn new_subscribe<P>(session: Arc<Session>) -> Arc<Mutex<EventBus<P>>>
                         let first = events.into_iter().next();
                         if let Some(event) = first {
                             let mut subscribers = subscribers.lock().unwrap();
+                            let mut qaq = VecDeque::with_capacity(subscribers.bus.len());
 
-                            for subscriber in subscribers.bus.iter_mut() {
-                                if (subscriber.predicate)(&event) {
-                                    subscriber.sender.send(event.clone());      // TODO: use Result
+                            while let Some(mut handler) = subscribers.bus.pop_front() {
+                                if (handler.predicate)(&event) {
+                                    if let Ok(_) = handler.sender.send(event.clone()) {
+                                        qaq.push_back(handler);
+                                    }
                                 }
                             }
+
+                            subscribers.bus.append(&mut qaq);
                         }
                     }
 
