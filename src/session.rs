@@ -2,7 +2,7 @@
 //!
 //! ## MiraiConnection
 //!
-//! First, you should construct a [`MiraiConnection`], it contains a client and a [`base_url`] property which is the address to the server.
+//! First, you should construct a [`MiraiConnection`], it contains a client and a [`base_url`] property which is the address of the server.
 //!
 //! ```rust
 //! use mirai::session::MiraiConnection;
@@ -15,13 +15,13 @@
 //!
 //! ## Session
 //!
-//! Second, you can use [`MiraiConnection::auth`] to authorize, the auth key can be found in mirai-console output when it starts.
+//! Second, you can use [`MiraiConnection::auth`] to authorizing, the auth key can be found in mirai-console output when it starts.
 //!
 //! ```rust
 //! let session = connection.auth("auth_key_should_be_kept_secret");
 //! ```
 //!
-//! After authorization, you can bind your session with a bot that is logged in the server.
+//! After authorizing, you can bind your session with a bot that is logged in the server.
 //!
 //! ```rust
 //! let account = "QQ Account".parse().unwrap();

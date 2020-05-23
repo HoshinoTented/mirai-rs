@@ -1,6 +1,6 @@
-//! [mirai](https://github.com/mamoe/mirai) is a protocol library for Tencent QQ, you can use it to write a QQ Bot or other thing.
+//! [mirai](https://github.com/mamoe/mirai) is a protocol library for Tencent QQ, you can use it to write a QQ Bot or other things.
 //!
-//! mirai-rs is a library that base on mirai-api-http server, you may should set up a mirai-api-http server first.
+//! mirai-rs is a library that base on a mirai-api-http server, you may should set up a mirai-api-http server first.
 //!
 //! First, you need to make a connection to the server, please see: [mod session].
 //!
