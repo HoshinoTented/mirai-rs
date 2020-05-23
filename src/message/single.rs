@@ -22,6 +22,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::message::{MessageID, TimeStamp, MessageChain};
 use crate::Target;
+use crate::image::Image;
 
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -120,6 +121,16 @@ impl ToString for SingleMessage {
 
                 format!("[mirai:face:{}]", s)
             }
+        }
+    }
+}
+
+impl From<Image> for SingleMessage {
+    fn from(img: Image) -> Self {
+        SingleMessage::Image {
+            image_id: Some(img.image_id),
+            url: Some(img.url),
+            path: Some(img.path),
         }
     }
 }

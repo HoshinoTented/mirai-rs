@@ -9,7 +9,7 @@ use crate::message::element::{FriendMember, Group, GroupMember};
 impl Session {
     async fn get_list<D>(&self, name: &'static str) -> Result<Vec<D>> where
         D: DeserializeOwned {
-        let resp = self.client.get(&self.url(&format!("/{}List?sessionKey={}", name, self.key)))
+        let resp = self.client().get(&self.url(&format!("/{}List?sessionKey={}", name, self.key)))
             .send().await?
             .json().await?;
 

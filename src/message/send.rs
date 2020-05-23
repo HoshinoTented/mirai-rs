@@ -26,7 +26,7 @@ struct SendMsgResponse {
 }
 
 impl Session {
-    pub async fn send_message(&self, channel: &MessageChannel, message: &Message) -> Result<MessageID> {
+    pub async fn send_message(&self, channel: MessageChannel, message: &Message) -> Result<MessageID> {
         let mut req = SendMsgRequest {
             session_key: self.key.clone(),
             qq: None,
@@ -37,26 +37,26 @@ impl Session {
 
         let message_type = match channel {
             MessageChannel::Group(group) => {
-                req.group = Some(*group);
+                req.group = Some(group);
 
                 "Group"
             }
 
             MessageChannel::Friend(friend) => {
-                req.qq = Some(*friend);
+                req.qq = Some(friend);
 
                 "Friend"
             }
 
             MessageChannel::Temp { qq, group } => {
-                req.qq = Some(*qq);
-                req.group = Some(*group);
+                req.qq = Some(qq);
+                req.group = Some(group);
 
                 "Temp"
             }
         };
 
-        let resp: SendMsgResponse = self.client.post(&self.url(&format!("/send{}Message", message_type)))
+        let resp: SendMsgResponse = self.client().post(&self.url(&format!("/send{}Message", message_type)))
             .json(&req).send().await?
             .json().await?;
 

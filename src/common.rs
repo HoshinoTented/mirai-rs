@@ -19,7 +19,7 @@ impl Session {
             target: message_id,
         };
 
-        let resp: CommonResponse = self.client.post(&self.url("/recall"))
+        let resp: CommonResponse = self.client().post(&self.url("/recall"))
             .json(&req).send().await?
             .json().await?;
 

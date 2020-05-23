@@ -21,7 +21,7 @@ impl Session {
                           sessionKey = self.key,
                           count = count);
 
-        let response: Response = self.client.get(&self.url(&url))
+        let response: Response = self.client().get(&self.url(&url))
             .send().await?
             .json().await?;
 

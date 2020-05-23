@@ -34,6 +34,24 @@ pub enum MessageEvent {
     },
 }
 
+impl MessageEvent {
+    pub fn is_group(&self) -> bool {
+        if let MessageEvent::GroupMessage { .. } = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_friend(&self) -> bool {
+        if let MessageEvent::FriendMessage { .. } = self {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 #[serde(tag = "type")]
 #[derive(Clone, Debug, Deserialize)]
 pub enum RecallEvent {

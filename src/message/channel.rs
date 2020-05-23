@@ -25,7 +25,7 @@ use crate::Target;
 use crate::error::{ClientError, Result};
 use crate::message::element::{GroupMember, Group, FriendMember};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum MessageChannel {
     Friend(Target),
     Group(Target),

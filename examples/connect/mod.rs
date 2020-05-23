@@ -1,9 +1,10 @@
-use mirai::session::{MiraiServer, Session};
+use mirai::session::{MiraiConnection, Session};
 use std::time::Duration;
 use std::io::stdin;
+use reqwest::Client;
 
-pub async fn connect() -> Session {
-    let server = MiraiServer::new("http://localhost:8080");
+pub async fn connect(client: Client) -> Session {
+    let server = MiraiConnection::new("http://localhost:8080", client);
 
     loop {
         println!("Try to connecting to server: {}", server.base_url);
@@ -28,7 +29,7 @@ pub async fn connect() -> Session {
     println!("Please input auth key: ");
     stdin().read_line(&mut auth_key).unwrap();
     let session = server.auth(auth_key.trim()).await.unwrap();
-    println!("Done: {:?}", session);
+    println!("Authorizing Successful.");
 
     println!("Please input qq id: ");
     stdin().read_line(&mut id).unwrap();

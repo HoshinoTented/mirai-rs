@@ -62,6 +62,12 @@ impl From<MessageBuilder> for Message {
     }
 }
 
+impl From<SingleMessage> for Message {
+    fn from(single: SingleMessage) -> Self {
+        Message::new(None, &vec![single])
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MessageBuilder {
     quote: Option<MessageID>,

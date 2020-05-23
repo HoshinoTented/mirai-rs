@@ -41,7 +41,7 @@ impl Session {
             target,
         };
 
-        let resp: CommonResponse = self.client.post(&(self.url("/") + path))
+        let resp: CommonResponse = self.client().post(&(self.url("/") + path))
             .json(&req).send().await?
             .json().await?;
 
@@ -74,7 +74,7 @@ impl Session {
             time: seconds,
         };
 
-        let resp: CommonResponse = self.client.post(&self.url("/mute"))
+        let resp: CommonResponse = self.client().post(&self.url("/mute"))
             .json(&req).send().await?
             .json().await?;
 
@@ -97,7 +97,7 @@ impl Session {
             member_id: target,
         };
 
-        let resp: CommonResponse = self.client.post(&self.url("/unmute"))
+        let resp: CommonResponse = self.client().post(&self.url("/unmute"))
             .json(&req).send().await?
             .json().await?;
 
@@ -122,7 +122,7 @@ impl Session {
             msg: msg.to_string(),
         };
 
-        let resp: CommonResponse = self.client.post(&self.url("/kick"))
+        let resp: CommonResponse = self.client().post(&self.url("/kick"))
             .json(&req).send().await?
             .json().await?;
 
@@ -142,7 +142,7 @@ impl Session {
             target: group_id,
         };
 
-        let resp: CommonResponse = self.client.post(&self.url("/quit"))
+        let resp: CommonResponse = self.client().post(&self.url("/quit"))
             .json(&req).send().await?
             .json().await?;
 
@@ -164,7 +164,7 @@ impl Session {
             config: config.clone(),
         };
 
-        let resp: CommonResponse = self.client.post(&self.url("/groupConfig"))
+        let resp: CommonResponse = self.client().post(&self.url("/groupConfig"))
             .json(&req).send().await?
             .json().await?;
 
@@ -172,7 +172,7 @@ impl Session {
     }
 
     pub async fn get_group_config(&self, group_id: Target) -> Result<GroupConfig> {
-        let config: GroupConfig = self.client.get(&self.url(&format!("/groupConfig?sessionKey={}&target={}", self.key, group_id)))
+        let config: GroupConfig = self.client().get(&self.url(&format!("/groupConfig?sessionKey={}&target={}", self.key, group_id)))
             .send().await?
             .json().await?;
 
@@ -197,7 +197,7 @@ impl Session {
             info: info.clone(),
         };
 
-        let resp: CommonResponse = self.client.post(&self.url("/groupConfig"))
+        let resp: CommonResponse = self.client().post(&self.url("/groupConfig"))
             .json(&req).send().await?
             .json().await?;
 
@@ -205,7 +205,7 @@ impl Session {
     }
 
     pub async fn get_member_info(&self, group_id: Target, target: Target) -> Result<MemberInfo> {
-        let info: MemberInfo = self.client.get(&self.url(&format!("/memberInfo?sessionKey={}&target={}&memberId={}", self.key, group_id, target)))
+        let info: MemberInfo = self.client().get(&self.url(&format!("/memberInfo?sessionKey={}&target={}&memberId={}", self.key, group_id, target)))
             .send().await?
             .json().await?;
 

@@ -1,4 +1,5 @@
 use reqwest::Error as ReqError;
+use std::io::Error as IOError;
 use std::fmt::Formatter;
 use crate::Code;
 
@@ -6,6 +7,7 @@ pub use MiraiError::ServerError;
 pub use MiraiError::HttpError;
 pub use MiraiError::ImpossibleError;
 pub use MiraiError::ClientError;
+use tokio::io::Error;
 
 pub type Result<T> = std::result::Result<T, MiraiError>;
 
@@ -14,6 +16,7 @@ pub enum MiraiError {
     ServerError(Code, String),
     ImpossibleError(String),
     HttpError(ReqError),
+    IOError(IOError),
     ClientError(String),
 }
 
@@ -55,6 +58,7 @@ impl std::fmt::Display for MiraiError {
             MiraiError::ServerError(code, s) => f.write_str(&format!("{}: {}", code, s)),
             MiraiError::ImpossibleError(s) => f.write_str(&format!("{}", s)),
             MiraiError::HttpError(e) => f.write_str(&e.to_string()),
+            MiraiError::IOError(e) => f.write_str(&e.to_string()),
             MiraiError::ClientError(e) => f.write_str(e),
         }
     }
@@ -63,5 +67,11 @@ impl std::fmt::Display for MiraiError {
 impl From<ReqError> for MiraiError {
     fn from(e: ReqError) -> Self {
         MiraiError::HttpError(e)
+    }
+}
+
+impl From<IOError> for MiraiError {
+    fn from(e: Error) -> Self {
+        MiraiError::IOError(e)
     }
 }

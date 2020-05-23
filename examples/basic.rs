@@ -10,23 +10,24 @@ use mirai::message::MessageBuilder;
 use mirai::message::element::Permission;
 
 use connect::connect;
+use reqwest::Client;
 
 #[tokio::main]
 async fn main() {
     let (sc, rc) = mpsc::channel();
-    let session = Arc::new(connect().await);
+    let session = Arc::new(connect(Client::new()).await);
 
     {
         let session = session.clone();
         let _job = tokio::spawn(async move {
             loop {
-                let mps = session.fetch_newest_message(1).await;
+                let events = session.fetch_newest_message(1).await;
 
-                match mps {
-                    Ok(mps) => {
-                        let first = mps.into_iter().next();
-                        if let Some(mp) = first {
-                            sc.send(mp).unwrap();
+                match events {
+                    Ok(events) => {
+                        let first = events.into_iter().next();
+                        if let Some(event) = first {
+                            sc.send(event).unwrap();
                         }
                     }
 

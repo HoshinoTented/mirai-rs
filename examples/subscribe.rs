@@ -7,14 +7,15 @@ use mirai::message::EventPacket;
 use mirai::message::event::MessageEvent;
 use mirai::session::Session;
 use std::collections::vec_deque::VecDeque;
+use reqwest::Client;
 
 struct EventHandler<P> {
-    sender: Sender<EventPacket>,
+    sender: Sender<Arc<EventPacket>>,
     predicate: P,
 }
 
 impl<P> EventHandler<P> {
-    pub fn new(sc: Sender<EventPacket>, predicate: P) -> EventHandler<P> {
+    pub fn new(sc: Sender<Arc<EventPacket>>, predicate: P) -> EventHandler<P> {
         EventHandler {
             sender: sc,
             predicate,
@@ -37,7 +38,7 @@ impl<P> EventBus<P> {
         self.bus.push_back(handler)
     }
 
-    pub fn subscribe(&mut self, predicate: P) -> Receiver<EventPacket> {
+    pub fn subscribe(&mut self, predicate: P) -> Receiver<Arc<EventPacket>> {
         let (sc, rc) = channel();
         let handler = EventHandler::new(sc, predicate);
 
@@ -48,7 +49,7 @@ impl<P> EventBus<P> {
 }
 
 fn new_subscribe<P>(session: Arc<Session>) -> Arc<Mutex<EventBus<P>>>
-    where P: FnMut(&EventPacket) -> bool + Send + 'static {
+    where P: FnMut(Arc<EventPacket>) -> bool + Send + 'static {
     let subscribers = Arc::new(Mutex::new(EventBus::<P>::new()));
 
     {
@@ -59,21 +60,21 @@ fn new_subscribe<P>(session: Arc<Session>) -> Arc<Mutex<EventBus<P>>>
 
                 match events {
                     Ok(events) => {
-                        let first = events.into_iter().next();
-                        if let Some(event) = first {
+                        events.into_iter().next().map(|event| {
                             let mut subscribers = subscribers.lock().unwrap();
-                            let mut qaq = VecDeque::with_capacity(subscribers.bus.len());
+                            let mut handler_queue = VecDeque::with_capacity(subscribers.bus.len());
+                            let event = Arc::new(event);
 
                             while let Some(mut handler) = subscribers.bus.pop_front() {
-                                if (handler.predicate)(&event) {
+                                if (handler.predicate)(event.clone()) {
                                     if let Ok(_) = handler.sender.send(event.clone()) {
-                                        qaq.push_back(handler);
+                                        handler_queue.push_back(handler);
                                     }
                                 }
                             }
 
-                            subscribers.bus.append(&mut qaq);
-                        }
+                            subscribers.bus.append(&mut handler_queue);
+                        });
                     }
 
                     Err(e) => println!("{:?}", e)
@@ -87,13 +88,13 @@ fn new_subscribe<P>(session: Arc<Session>) -> Arc<Mutex<EventBus<P>>>
 
 #[tokio::main]
 async fn main() {
-    let session = Arc::new(connect().await);
-    let bus = new_subscribe::<fn(&EventPacket) -> bool>(session);
+    let session = Arc::new(connect(Client::new()).await);
+    let bus = new_subscribe::<fn(Arc<EventPacket>) -> bool>(session);
 
     let rc = {
         let mut bus = bus.lock().unwrap();
 
-        bus.subscribe(|event| if let EventPacket::MessageEvent(MessageEvent::FriendMessage { .. }) = event {
+        bus.subscribe(|event| if let EventPacket::MessageEvent(&msg) = *event {
             true
         } else {
             false
