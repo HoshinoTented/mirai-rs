@@ -69,6 +69,8 @@ fn new_subscribe<P>(session: Arc<Session>) -> Arc<Mutex<EventBus<P>>>
                                 if (handler.predicate)(event.clone()) {
                                     if let Ok(_) = handler.sender.send(event.clone()) {
                                         handler_queue.push_back(handler);
+                                    } else {
+                                        println!("Sending failed");
                                     }
                                 }
                             }
@@ -94,7 +96,7 @@ async fn main() {
     let rc = {
         let mut bus = bus.lock().unwrap();
 
-        bus.subscribe(|event| if let EventPacket::MessageEvent(&msg) = *event {
+        bus.subscribe(|event| if let EventPacket::MessageEvent(_) = event.deref() {
             true
         } else {
             false

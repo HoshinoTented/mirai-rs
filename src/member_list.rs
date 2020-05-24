@@ -5,26 +5,31 @@ use crate::session::Session;
 use crate::error::Result;
 use serde::de::DeserializeOwned;
 use crate::message::element::{FriendMember, Group, GroupMember};
+use crate::Target;
 
 impl Session {
-    async fn get_list<D>(&self, name: &'static str) -> Result<Vec<D>> where
+    async fn get_list<D>(&self, path: String) -> Result<Vec<D>> where
         D: DeserializeOwned {
-        let resp = self.client().get(&self.url(&format!("/{}List?sessionKey={}", name, self.key)))
+        let resp = self.client()
+            .get(&self.url(&path))
             .send().await?
             .json().await?;
 
         Ok(resp)
     }
 
+    /// Get the friend list of the bound QQ
     pub async fn friend_list(&self) -> Result<Vec<FriendMember>> {
-        self.get_list("friend").await
+        self.get_list(format!("/friendList?sessionKey={}", self.key)).await
     }
 
+    /// Get the group list of the bound QQ
     pub async fn group_list(&self) -> Result<Vec<Group>> {
-        self.get_list("group").await
+        self.get_list(format!("/groupList?sessionKey={}", self.key)).await
     }
 
-    pub async fn group_member_list(&self) -> Result<Vec<GroupMember>> {
-        self.get_list("member").await
+    /// Get
+    pub async fn group_member_list(&self, target: Target) -> Result<Vec<GroupMember>> {
+        self.get_list(format!("/memberList?sessionKey={}&target={}", self.key, target)).await
     }
 }
