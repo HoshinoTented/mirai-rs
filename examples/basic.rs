@@ -55,7 +55,7 @@ async fn main() {
 
             match msg.trim() {
                 "Hello" => {
-                    session.send_message(&sender.group().as_group_channel(), &MessageBuilder::new()
+                    session.send_message(sender.group().as_group_channel(), &MessageBuilder::new()
                         .append_message(SingleMessage::Image { image_id: None, url: None, path: Some("nya.png".to_string()) })
                         .build().unwrap(),
                     ).await.unwrap();
@@ -64,7 +64,7 @@ async fn main() {
                 "mute me" => {
                     if let Permission::Administrator | Permission::Owner = sender.group().permission() {
                         if let Permission::Administrator | Permission::Owner = sender.permission() {
-                            session.send_message(&sender.group().as_group_channel(),
+                            session.send_message(sender.group().as_group_channel(),
                                                  &MessageBuilder::new()
                                                      .append_message("You are too powerful to mute.".into())
                                                      .build().unwrap(),
@@ -82,7 +82,7 @@ async fn main() {
                             }
                         }
                     } else {
-                        session.send_message(&sender.group().as_group_channel(),
+                        session.send_message(sender.group().as_group_channel(),
                                              &MessageBuilder::new()
                                                  .append_message("I have not enough permission QAQ.".into())
                                                  .build().unwrap(),
@@ -91,7 +91,7 @@ async fn main() {
                 }
 
                 "talk with me" => {
-                    session.send_message(&sender.as_temp_channel(),
+                    session.send_message(sender.as_temp_channel(),
                                          &MessageBuilder::new()
                                              .append_message("Hello".into())
                                              .build().unwrap(),

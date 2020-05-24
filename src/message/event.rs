@@ -160,3 +160,12 @@ pub enum EventPacket {
 
     Unsupported(Value),
 }
+
+impl EventPacket {
+    pub fn is_message(&self) -> bool {
+        match self {
+            EventPacket::MessageEvent(_) => true,
+            _ => false
+        }
+    }
+}

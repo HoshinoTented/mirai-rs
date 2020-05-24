@@ -25,6 +25,7 @@ use crate::Target;
 use crate::error::{ClientError, Result};
 use crate::message::element::{GroupMember, Group, FriendMember};
 
+/// Mirai-api-http provides three channel to send message, [Friend], [Group] and [Temp].
 #[derive(Debug, Clone, Copy)]
 pub enum MessageChannel {
     Friend(Target),
@@ -33,6 +34,7 @@ pub enum MessageChannel {
 }
 
 impl MessageChannel {
+    /// Return `Ok(group)` if this channel is [Group]
     pub fn group(self) -> Result<Target> {
         if let MessageChannel::Group(group) = self {
             Ok(group)
@@ -41,6 +43,7 @@ impl MessageChannel {
         }
     }
 
+    /// Return `Ok(QQ)` if this channel is [Friend]
     pub fn friend(self) -> Result<Target> {
         if let MessageChannel::Friend(friend) = self {
             Ok(friend)
@@ -49,7 +52,7 @@ impl MessageChannel {
         }
     }
 
-    /// returns (qq, group)
+    /// Return `Ok((QQ, Group))` if thie channel is [Temp]
     pub fn temp(self) -> Result<(Target, Target)> {
         if let MessageChannel::Temp { qq, group } = self {
             Ok((qq, group))
