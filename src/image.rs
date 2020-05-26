@@ -44,7 +44,7 @@ impl From<Image> for SingleMessage {
 }
 
 impl Session {
-    #[deprecated(note = "this function cannot work correctly")]
+    #[deprecated(note = "this function cannot work correctly. See #85")]
     pub async fn upload_image(&self, image_type: ImageType, bytes: Bytes) -> Result<Image> {
         let form = Form::new()
             .text("sessionKey", self.key.clone())

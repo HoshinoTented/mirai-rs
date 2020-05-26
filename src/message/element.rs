@@ -41,6 +41,13 @@ impl GroupMember {
     }
 }
 
+#[serde(untagged)]
+#[derive(Debug, Clone, Deserialize)]
+pub enum Sender {
+    Friend(FriendMember),
+    Group(GroupMember),
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct FriendMember {
     pub(crate) id: Target,

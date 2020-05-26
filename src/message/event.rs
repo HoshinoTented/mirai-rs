@@ -1,8 +1,8 @@
-//! You can use [fetch_newest_message] which in [receive] mod to receive EventPacket.
+//! You can use [fetch_newest_message] to receive EventPacket, which in in [receive] mod
 //!
 //! # EventPacket
 //!
-//! [`EventPacket`] is the event which you received from the server, but it just a wrapper.
+//! [`EventPacket`] is the event which you received from the server, but it is just a wrapper.
 //!
 //! The most commonly used event is: [`MessageEvent`]. [`MessageEvent`] has two primary variant:
 //!
@@ -48,6 +48,13 @@ impl MessageEvent {
             true
         } else {
             false
+        }
+    }
+
+    pub fn message_chain(&self) -> &MessageChain {
+        match self {
+            MessageEvent::GroupMessage { message_chain, sender: _ } => message_chain,
+            MessageEvent::FriendMessage { message_chain, sender: _ } => message_chain,
         }
     }
 }
@@ -157,7 +164,6 @@ pub enum EventPacket {
     BotMuteEvent(BotMuteEvent),
     RecallEvent(RecallEvent),
     GroupChangeEvent(GroupChangeEvent),
-
     Unsupported(Value),
 }
 
