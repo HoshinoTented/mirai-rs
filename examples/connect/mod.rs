@@ -10,8 +10,8 @@ pub async fn connect(client: Client) -> Session {
         println!("Try to connecting to server: {}", server.base_url);
 
         match server.about().await {
-            Err(_) => {
-                println!("Failed, try to reconnect...");
+            Err(e) => {
+                println!("Failed, try to reconnect: {:?}", e);
                 std::thread::sleep(Duration::from_secs(1));
             }
 

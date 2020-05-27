@@ -4,7 +4,6 @@ use connect::connect;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{Sender, Receiver, channel};
 use mirai::message::EventPacket;
-use mirai::message::event::MessageEvent;
 use mirai::session::Session;
 use std::collections::vec_deque::VecDeque;
 use reqwest::Client;
@@ -96,11 +95,7 @@ async fn main() {
     let rc = {
         let mut bus = bus.lock().unwrap();
 
-        bus.subscribe(|event| if let EventPacket::MessageEvent(_) = event.deref() {
-            true
-        } else {
-            false
-        })
+        bus.subscribe(|event| event.is_message())
     };
 
     for packet in rc {
