@@ -8,13 +8,15 @@
 //!
 //! Have a good time!
 
-pub mod session;
-pub mod error;
-pub mod message;
-pub mod member_list;
 pub mod common;
+pub mod config;
+pub mod error;
 pub mod group;
 pub mod image;
+pub mod member_list;
+pub mod message;
+pub mod session;
 
 pub type Target = u64;
 pub type Code = u16;
+pub type CacheSize = u16;
