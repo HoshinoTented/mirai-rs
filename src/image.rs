@@ -44,21 +44,16 @@ impl From<Image> for SingleMessage {
 }
 
 impl Session {
-    #[deprecated(note = "this function cannot work correctly. See #85")]
-    pub async fn upload_image(&self, image_type: ImageType, bytes: Bytes) -> Result<Image> {
+    pub async fn upload_image(&self, image_type: ImageType, bytes: Bytes, file_name: String) -> Result<Image> {
         let form = Form::new()
             .text("sessionKey", self.key.clone())
             .text("type", image_type.to_string())
-            .part("img", Part::stream(Body::from(bytes)));
+            .part("img", Part::stream(Body::from(bytes)).file_name(file_name));
 
-        let text = self.client().post(&self.url("/uploadImage"))
+        let img: Image = self.client().post(&self.url("/uploadImage"))
             .multipart(form).send().await?
-            .text().await?;
+            .json().await?;
 
-        println!("{}", text);
-
-        unimplemented!();
-
-        // Ok(resp)
+        Ok(img)
     }
 }

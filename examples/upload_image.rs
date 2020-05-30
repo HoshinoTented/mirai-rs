@@ -15,7 +15,7 @@ async fn main() {
     let img = reqwest::get(URL).await.unwrap()
         .bytes().await.unwrap();
 
-    let img = session.upload_image(ImageType::Group, img).await.unwrap();
+    let img = session.upload_image(ImageType::Group, img, String::from("test.png")).await.unwrap();
 
     println!("Uploaded.");
 
