@@ -2,9 +2,9 @@ mod connect;
 
 use connect::connect;
 use mirai::image::{ImageType};
-use mirai::message::{MessageChannel, SingleMessage};
+use mirai::message::{SingleMessage};
 use mirai::message::channel::AsGroupChannel;
-use reqwest::{Client, Proxy};
+use reqwest::{Client};
 
 #[tokio::main]
 async fn main() {

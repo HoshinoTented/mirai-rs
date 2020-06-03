@@ -1,7 +1,7 @@
 use reqwest::Error as ReqError;
 
 use std::error::Error as StdError;
-use std::io::Error as IOError;
+
 use std::fmt::Formatter;
 
 use crate::Code;
@@ -81,12 +81,16 @@ impl std::fmt::Display for ServerError {
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        let mut builder = f.debug_struct("mirai::error::Error");
+        let msg = match self.inner.kind {
+            ErrorKind::Server => {
+                "Error occurs from server side:"
+            },
+            ErrorKind::Client => {
+                "Error occurs from client side:"
+            },
+        };
 
-        builder.field("kind", &self.inner.kind);
-        builder.field("source", &self.inner.source);
-
-        builder.finish()
+        f.write_str(&format!("{} {:?}", msg, self.inner.source))
     }
 }
 
@@ -112,7 +116,7 @@ const MUTED: Code = 20;
 const MESSAGE_TOO_LONG: Code = 30;
 const BAD_REQUEST: Code = 400;
 
-pub(crate) fn assert(code: Code, action: &str) -> Result<()> {
+pub(crate) fn assert(code: Code, _action: &str) -> Result<()> {
     let msg = match code {
         SUCCESS => return Ok(()),
         WRONG_AUTH_KEY => "Wrong auth key",
