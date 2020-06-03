@@ -18,11 +18,11 @@
 //! let target_channel = MessageChannel::Group(group);
 //! let message = MessageBuilder::new().append_message("Hello".into()).build().unwrap();
 //!
-//! session.send_message(&target_channel, &message).await.unwrap();
+//! session.send_message(target_channel, &message).await.unwrap();
 //! ```
 
 use crate::Target;
-use crate::error::{ClientError, Result};
+use crate::error::{Result, client_error};
 use crate::message::element::{GroupMember, Group, FriendMember};
 
 /// Mirai-api-http provides three channel to send message, [Friend], [Group] and [Temp].
@@ -39,7 +39,7 @@ impl MessageChannel {
         if let MessageChannel::Group(group) = self {
             Ok(group)
         } else {
-            Err(ClientError("Expect Group Target".to_string()))
+            Err(client_error("Expect Group Target"))
         }
     }
 
@@ -48,7 +48,7 @@ impl MessageChannel {
         if let MessageChannel::Friend(friend) = self {
             Ok(friend)
         } else {
-            Err(ClientError("Expect Friend Target".to_string()))
+            Err(client_error("Expect Friend Target"))
         }
     }
 
@@ -57,7 +57,7 @@ impl MessageChannel {
         if let MessageChannel::Temp { qq, group } = self {
             Ok((qq, group))
         } else {
-            Err(ClientError("Expect Temp Target".to_string()))
+            Err(client_error("Expect Temp Target"))
         }
     }
 }

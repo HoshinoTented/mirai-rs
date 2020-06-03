@@ -6,7 +6,7 @@ use crate::{Target, Code};
 use crate::message::{MessageID, MessageChain, Message};
 use crate::session::Session;
 use crate::message::channel::MessageChannel;
-use crate::error::{Result, assert, ImpossibleError};
+use crate::error::{Result, assert};
 
 #[serde(rename_all = "camelCase")]
 #[derive(Serialize)]
@@ -62,6 +62,6 @@ impl Session {
 
         assert(resp.code, "Sending")?;
 
-        resp.message_id.ok_or(ImpossibleError("messageId is None".to_string()))
+        Ok(resp.message_id.unwrap())
     }
 }

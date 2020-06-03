@@ -1,24 +1,104 @@
 use reqwest::Error as ReqError;
+
+use std::error::Error as StdError;
 use std::io::Error as IOError;
 use std::fmt::Formatter;
+
 use crate::Code;
 
-pub use MiraiError::ServerError;
-pub use MiraiError::HttpError;
-pub use MiraiError::ImpossibleError;
-pub use MiraiError::ClientError;
-use tokio::io::Error;
+pub type Result<T> = std::result::Result<T, Error>;
 
-pub type Result<T> = std::result::Result<T, MiraiError>;
+pub(crate) type BoxError = Box<dyn StdError + Send + Sync>;
 
 #[derive(Debug)]
-pub enum MiraiError {
-    ServerError(Code, String),
-    ImpossibleError(String),
-    HttpError(ReqError),
-    IOError(IOError),
-    ClientError(String),
+pub struct Error {
+    inner: Box<Inner>
 }
+
+#[derive(Debug)]
+struct Inner {
+    kind: ErrorKind,
+    source: BoxError,
+}
+
+#[derive(Debug)]
+pub struct ServerError {
+    code: Code,
+    msg: String,
+}
+
+#[derive(Debug)]
+pub struct ClientError<'m> {
+    msg: &'m str
+}
+
+#[derive(Debug)]
+pub enum ErrorKind {
+    Server,
+    Client,
+}
+
+impl Error {
+    pub fn new<E>(kind: ErrorKind, source: E) -> Error
+        where E: Into<BoxError> {
+        Error {
+            inner: Box::new(Inner {
+                kind,
+                source: source.into(),
+            })
+        }
+    }
+}
+
+impl ServerError {
+    pub fn new(code: Code, msg: String) -> Self {
+        ServerError {
+            code,
+            msg,
+        }
+    }
+}
+
+impl<'m> ClientError<'m> {
+    pub fn new(msg: &'m str) -> Self {
+        ClientError {
+            msg
+        }
+    }
+}
+
+impl<'m> std::fmt::Display for ClientError<'m> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.msg)
+    }
+}
+
+impl std::fmt::Display for ServerError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("[{}] {}", self.code, self.msg))
+    }
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        let mut builder = f.debug_struct("mirai::error::Error");
+
+        builder.field("kind", &self.inner.kind);
+        builder.field("source", &self.inner.source);
+
+        builder.finish()
+    }
+}
+
+impl StdError for Error {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        Some(self.inner.source.as_ref())
+    }
+}
+
+impl StdError for ServerError {}
+
+impl StdError for ClientError<'_> {}
 
 const SUCCESS: Code = 0;
 const WRONG_AUTH_KEY: Code = 1;
@@ -49,29 +129,15 @@ pub(crate) fn assert(code: Code, action: &str) -> Result<()> {
         _ => "Unknown code"
     };
 
-    Err(MiraiError::ServerError(code, format!("[{}] {}", action, msg)))
+    Err(Error::new(ErrorKind::Server, ServerError::new(code, msg.to_string())))
 }
 
-impl std::fmt::Display for MiraiError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        match self {
-            MiraiError::ServerError(code, s) => f.write_str(&format!("{}: {}", code, s)),
-            MiraiError::ImpossibleError(s) => f.write_str(&format!("{}", s)),
-            MiraiError::HttpError(e) => f.write_str(&e.to_string()),
-            MiraiError::IOError(e) => f.write_str(&e.to_string()),
-            MiraiError::ClientError(e) => f.write_str(e),
-        }
-    }
+pub(crate) fn client_error(msg: &'static str) -> Error {
+    Error::new(ErrorKind::Client, ClientError::new(msg))
 }
 
-impl From<ReqError> for MiraiError {
+impl From<ReqError> for Error {
     fn from(e: ReqError) -> Self {
-        MiraiError::HttpError(e)
-    }
-}
-
-impl From<IOError> for MiraiError {
-    fn from(e: Error) -> Self {
-        MiraiError::IOError(e)
+        Error::new(ErrorKind::Client, e)
     }
 }

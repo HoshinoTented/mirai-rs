@@ -42,7 +42,7 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-use crate::error::{Result, ImpossibleError, assert};
+use crate::error::{Result, assert};
 use crate::{Code, Target};
 
 #[derive(Clone, Debug)]
@@ -129,7 +129,7 @@ impl MiraiConnection {
 
         Ok(Session {
             connection: self.clone(),
-            key: result.session.ok_or(ImpossibleError("session is None".to_string()))?,
+            key: result.session.unwrap()
         })
     }
 
