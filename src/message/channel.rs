@@ -52,7 +52,7 @@ impl MessageChannel {
         }
     }
 
-    /// Return `Ok((QQ, Group))` if thie channel is [Temp]
+    /// Return `Ok((QQ, Group))` if this channel is [Temp]
     pub fn temp(self) -> Result<(Target, Target)> {
         if let MessageChannel::Temp { qq, group } = self {
             Ok((qq, group))

@@ -1,13 +1,17 @@
 mod connect;
 
-use connect::connect;
-use reqwest::Client;
+use connect::{default_client, connect};
+use reqwest::{Client, Proxy};
+use mirai::config::Config;
 
 #[tokio::main]
 async fn main() {
-    let session = connect(Client::new()).await;
+    let session = connect(default_client()).await;
 
     println!("{:?}", session.get_config().await.unwrap());
-    println!("{:?}", session.modify_config(8086, true).await.unwrap());
+    println!("{:?}", session.modify_config(Config {
+        cache_size: 8086,
+        enable_websocket: true,
+    }).await.unwrap());
     println!("{:?}", session.get_config().await.unwrap());
 }

@@ -48,6 +48,20 @@ impl Error {
             })
         }
     }
+
+    pub fn is_server(&self) -> bool {
+        match self.inner.kind {
+            ErrorKind::Server => true,
+            _ => false
+        }
+    }
+
+    pub fn is_client(&self) -> bool {
+        match self.inner.kind {
+            ErrorKind::Client => true,
+            _ => false
+        }
+    }
 }
 
 impl ServerError {
@@ -116,7 +130,7 @@ const MUTED: Code = 20;
 const MESSAGE_TOO_LONG: Code = 30;
 const BAD_REQUEST: Code = 400;
 
-pub(crate) fn assert(code: Code, _action: &str) -> Result<()> {
+pub(crate) fn assert(code: Code, action: &str) -> Result<()> {
     let msg = match code {
         SUCCESS => return Ok(()),
         WRONG_AUTH_KEY => "Wrong auth key",
@@ -133,7 +147,7 @@ pub(crate) fn assert(code: Code, _action: &str) -> Result<()> {
         _ => "Unknown code"
     };
 
-    Err(Error::new(ErrorKind::Server, ServerError::new(code, msg.to_string())))
+    Err(Error::new(ErrorKind::Server, ServerError::new(code, format!("[{}] {}", action, msg))))
 }
 
 pub(crate) fn client_error(msg: &'static str) -> Error {
