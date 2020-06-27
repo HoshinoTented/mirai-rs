@@ -81,7 +81,7 @@ impl<'m> ClientError<'m> {
     }
 }
 
-impl<'m> std::fmt::Display for ClientError<'m> {
+impl std::fmt::Display for ClientError<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.msg)
     }
@@ -97,10 +97,10 @@ impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         let msg = match self.inner.kind {
             ErrorKind::Server => {
-                "Error occurs from server side:"
+                "Error occurred from server side:"
             },
             ErrorKind::Client => {
-                "Error occurs from client side:"
+                "Error occurred from client side:"
             },
         };
 
@@ -156,6 +156,6 @@ pub(crate) fn client_error(msg: &'static str) -> Error {
 
 impl From<ReqError> for Error {
     fn from(e: ReqError) -> Self {
-        Error::new(ErrorKind::Client, e)
+        Error::new(ErrorKind::Server, e)
     }
 }

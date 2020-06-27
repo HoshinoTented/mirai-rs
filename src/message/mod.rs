@@ -78,7 +78,7 @@ pub struct MessageBuilder {
 ///
 /// `MessageBuilder` can build a `Message` by builder-like flavor.
 ///
-/// When invoking [build] function, `MessageBuilder` need: [target] and a non-empty [message_chain],
+/// When invoking [build] function, `MessageBuilder` needs a non-empty [message_chain],
 /// if not, [build] function will returns an Error.
 ///
 impl MessageBuilder {
