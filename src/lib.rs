@@ -16,6 +16,7 @@ pub mod image;
 pub mod member_list;
 pub mod message;
 pub mod session;
+pub mod test;
 
 pub type Target = u64;
 pub type Code = u16;
