@@ -10,15 +10,15 @@ use tokio::sync::broadcast::Sender;
 
 use mirai::message::EventPacket;
 use mirai::session::Session;
-use mirai::test::Mock;
 
 use reqwest::Client;
-use std::time::Duration;
 
-fn start_subscribe<P>(session: Arc<Session>) -> Sender<Arc<EventPacket>> {
+fn start_subscribe(session: Arc<Session>) -> Arc<Sender<Arc<EventPacket>>> {
     let (tx, _) = broadcast::channel(usize::MAX);
+    let tx = Arc::new(tx);
 
     {
+        let tx = tx.clone();
         let _job = tokio::spawn(async move {
             loop {
                 let events = session.fetch_newest_message(1).await;
@@ -44,9 +44,9 @@ fn start_subscribe<P>(session: Arc<Session>) -> Sender<Arc<EventPacket>> {
 async fn main() {
     let session = Arc::new(connect(Client::new()).await);
     let tx = start_subscribe(session);
-    let rx = tx.subscribe();
+    let mut rx = tx.subscribe();
 
-    for packet in rx {
+    while let Ok(packet) = rx.recv().await {
         println!("{:?}", packet);
     }
 }
