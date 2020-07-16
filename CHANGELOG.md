@@ -1,16 +1,16 @@
 # Change Log 
 
-## v0.1.1
+## v0.1.0
 
 ### Add
 
-* Basic functions, such as sending and receiving
+* basic functions, such as sending and receiving
 
-## v0.0.1
+## v0.1.1
 
 ### Refactor
 
-* Refactored Event Structure
+* refactored event structure
 
 ### Add
 
@@ -18,7 +18,9 @@
 * sending images
 * clearer document 
 
-## v0.0.2
+## v0.1.2
+
+### Add
 
 * uploading images
 * more document
