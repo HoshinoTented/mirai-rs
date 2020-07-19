@@ -21,12 +21,14 @@ struct Inner {
     source: BoxError,
 }
 
+/// Server Error is an error from server, such as login failed or parsing server response failed.
 #[derive(Debug)]
 pub struct ServerError {
     code: Code,
     msg: String,
 }
 
+/// Client Error is an error from client, will be threw when unwrapping a friend channel as a group channel.
 #[derive(Debug)]
 pub struct ClientError<'m> {
     msg: &'m str
