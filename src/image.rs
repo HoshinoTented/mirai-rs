@@ -1,12 +1,12 @@
 use crate::session::Session;
 use crate::error::Result;
+use crate::message::SingleMessage;
 
 use reqwest::multipart::{Form, Part};
+use reqwest::Body;
 
 use serde::{Serialize, Deserialize};
 use bytes::Bytes;
-use reqwest::Body;
-use crate::message::SingleMessage;
 
 #[serde(rename_all = "camelCase")]
 #[derive(Debug, Serialize, Deserialize)]
