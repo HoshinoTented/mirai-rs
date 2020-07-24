@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "mirai_rs",
+    "mirai_mock",
+    "mirai_test",
+]

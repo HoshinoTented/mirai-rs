@@ -12,7 +12,6 @@ A mirai-client implemented in Rust.
 Add following code in your `Cargo.toml`.
 
 ```toml
-[dependencies]
 mirai_rs = "0.1.1"
 ```
 
@@ -20,12 +19,7 @@ The newest version is: [![crates](https://img.shields.io/crates/v/mirai_rs)](htt
 
 The mirai-api-http version which current supports: `1.7.1`
 
-mirai_rs is still unstable, so we recommend you use the dev version that avoid some bugs ~~(and get more new bugs)~~:
-
-```toml
-[dependencies]
-mirai_rs = { git = "https://github.com/HoshinoTented/mirai-rs" }
-```
+mirai_rs is still unstable, so we recommend you use the newest version that avoid some bugs ~~(and get more new bugs)~~.
 
 ## More information
 

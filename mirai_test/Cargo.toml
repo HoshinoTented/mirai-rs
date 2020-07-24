@@ -1,0 +1,12 @@
+[package]
+name = "mirai_test"
+version = "0.0.1"
+edition = "2018"
+
+[dependencies]
+mirai_rs = { path = "../mirai_rs" }
+reqwest = "0.10"
+tokio = { version = "0.2", features = ["full"] }
+
+[lib]
+name = "mirai_test"
