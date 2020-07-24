@@ -4,7 +4,7 @@
 //!
 //! First, you should construct a [`MiraiConnection`], it contains a client and a [`base_url`] property which is the address of the server.
 //!
-//! ```rust
+//! ```ignore
 //! use mirai::session::MiraiConnection;
 //! use reqwest::Client;
 //!
@@ -17,13 +17,13 @@
 //!
 //! Second, you can use [`MiraiConnection::auth`] to authorizing, the auth key can be found in mirai-console output when it starts.
 //!
-//! ```rust
+//! ```ignore
 //! let session = connection.auth("auth_key_should_be_kept_secret");
 //! ```
 //!
 //! After authorizing, you can bind your session with a bot that is logged in the server.
 //!
-//! ```rust
+//! ```ignore
 //! let account = "QQ Account".parse().unwrap();
 //! session.verify(account);
 //! ```
@@ -32,7 +32,7 @@
 //!
 //! After these, you should release the connection which your session to a bot.
 //!
-//! ```rust
+//! ```ignore
 //! session.release(account);
 //! ```
 //!
@@ -65,19 +65,60 @@ pub struct Session {
 /// The most general response from the mirai server, it only contains a state code and a message string.
 #[derive(Deserialize)]
 pub(crate) struct CommonResponse {
-    pub code: Code,
-    pub msg: String,
+    pub(crate) code: Code,
+    pub(crate) msg: String,
 }
 
-#[derive(Deserialize)]
+impl CommonResponse {
+    pub fn new(code: Code, msg: String) -> CommonResponse {
+        CommonResponse {
+            code,
+            msg,
+        }
+    }
+
+    pub fn code(&self) -> Code {
+        self.code
+    }
+
+    pub fn msg(&self) -> &String {
+        &self.msg
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Eq, PartialEq)]
 pub struct AboutResponse {
-    pub code: Code,
-    pub data: AboutData,
+    pub(crate) code: Code,
+    pub(crate) data: AboutData,
 }
 
-#[derive(Deserialize)]
+impl AboutResponse {
+    pub fn new(code: Code, data: AboutData) -> Self {
+        AboutResponse { code, data }
+    }
+
+    pub fn code(&self) -> Code {
+        self.code
+    }
+
+    pub fn data(&self) -> &AboutData {
+        &self.data
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Eq, PartialEq)]
 pub struct AboutData {
-    pub version: String
+    pub(crate) version: String
+}
+
+impl AboutData {
+    pub fn new(version: String) -> Self {
+        AboutData { version }
+    }
+
+    pub fn version(&self) -> &String {
+        &self.version
+    }
 }
 
 impl MiraiConnection {

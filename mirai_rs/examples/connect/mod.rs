@@ -16,7 +16,7 @@ pub async fn connect_server(client: Client) -> MiraiConnection {
             }
 
             Ok(resp) => {
-                println!("Success. Mirai Server Version: {}", resp.data.version);
+                println!("Success. Mirai Server Version: {}", resp.data().version());
                 break;
             }
         }

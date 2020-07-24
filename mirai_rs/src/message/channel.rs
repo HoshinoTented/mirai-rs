@@ -10,7 +10,7 @@
 //!
 //! Then you can:
 //!
-//! ```rust
+//! ```ignore
 //! use mirai::message::{channel::MessageChannel, MessageBuilder};
 //! use mirai::session::Session;
 //!

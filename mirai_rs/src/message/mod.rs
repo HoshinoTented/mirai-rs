@@ -14,7 +14,7 @@
 //!
 //! like this:
 //!
-//! ```rust
+//! ```ignore
 //! use mirai::message::MessageBuilder;
 //!
 //! let message = MessageBuilder::new()

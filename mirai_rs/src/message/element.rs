@@ -23,6 +23,14 @@ pub struct GroupMember {
     pub(crate) group: Group,
 }
 
+impl PartialEq for GroupMember {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id && self.group == other.group
+    }
+}
+
+impl Eq for GroupMember {}
+
 impl GroupMember {
     pub fn id(&self) -> Target {
         self.id
@@ -42,7 +50,7 @@ impl GroupMember {
 }
 
 #[serde(untagged)]
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Eq, PartialEq)]
 pub enum Sender {
     Friend(FriendMember),
     Group(GroupMember),
@@ -55,6 +63,14 @@ pub struct FriendMember {
     pub(crate) nick_name: String,
     pub(crate) remark: String,
 }
+
+impl PartialEq for FriendMember {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for FriendMember {}
 
 impl FriendMember {
     pub fn id(&self) -> Target {
@@ -76,6 +92,14 @@ pub struct Group {
     pub(crate) name: String,
     pub(crate) permission: Permission,
 }
+
+impl PartialEq for Group {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for Group {}
 
 impl Group {
     pub fn id(&self) -> Target {
