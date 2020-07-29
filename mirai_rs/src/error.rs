@@ -28,12 +28,6 @@ pub struct ServerError {
     msg: String,
 }
 
-/// Client Error is an error from client, will be threw when unwrapping a friend channel as a group channel.
-#[derive(Debug)]
-pub struct ClientError<'m> {
-    msg: &'m str
-}
-
 #[derive(Debug)]
 pub enum ErrorKind {
     Server,
@@ -75,20 +69,6 @@ impl ServerError {
     }
 }
 
-impl<'m> ClientError<'m> {
-    pub fn new(msg: &'m str) -> Self {
-        ClientError {
-            msg
-        }
-    }
-}
-
-impl std::fmt::Display for ClientError<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.msg)
-    }
-}
-
 impl std::fmt::Display for ServerError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!("[{}] {}", self.code, self.msg))
@@ -117,8 +97,6 @@ impl StdError for Error {
 }
 
 impl StdError for ServerError {}
-
-impl StdError for ClientError<'_> {}
 
 const SUCCESS: Code = 0;
 const WRONG_AUTH_KEY: Code = 1;
@@ -150,10 +128,6 @@ pub(crate) fn assert(code: Code, action: &str) -> Result<()> {
     };
 
     Err(Error::new(ErrorKind::Server, ServerError::new(code, format!("[{}] {}", action, msg))))
-}
-
-pub(crate) fn client_error(msg: &'static str) -> Error {
-    Error::new(ErrorKind::Client, ClientError::new(msg))
 }
 
 impl From<ReqError> for Error {

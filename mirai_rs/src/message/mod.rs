@@ -29,6 +29,7 @@ pub mod element;
 pub mod channel;
 pub mod send;
 pub mod receive;
+pub mod parse;
 
 use crate::error::Result;
 

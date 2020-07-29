@@ -22,8 +22,40 @@
 //! ```
 
 use crate::Target;
-use crate::error::{Result, client_error};
+use crate::error::{Result, Error, ErrorKind};
 use crate::message::element::{GroupMember, Group, FriendMember};
+use serde::export::Formatter;
+
+#[derive(Debug)]
+pub struct UnwrapError {
+    expected: ChannelKind,
+    got: MessageChannel,
+}
+
+impl UnwrapError {
+    pub(crate) fn new(expected: ChannelKind, got: MessageChannel) -> UnwrapError {
+        UnwrapError {
+            expected,
+            got,
+        }
+    }
+}
+
+impl std::fmt::Display for UnwrapError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("Error occurred when unwrapping a MessageChannel: expected {:?} but got {:?}.", self.expected, self.got.kind()))
+    }
+}
+
+impl std::error::Error for UnwrapError {}
+
+
+#[derive(Debug)]
+pub enum ChannelKind {
+    Friend,
+    Group,
+    Temp,
+}
 
 /// Mirai-api-http provides three channel to send message, [Friend], [Group] and [Temp].
 #[derive(Debug, Clone, Copy)]
@@ -34,12 +66,16 @@ pub enum MessageChannel {
 }
 
 impl MessageChannel {
+    fn unwrap_error(self, kind: ChannelKind) -> Error {
+        Error::new(ErrorKind::Client, UnwrapError::new(kind, self))
+    }
+
     /// Return `Ok(group)` if this channel is [Group]
     pub fn group(self) -> Result<Target> {
         if let MessageChannel::Group(group) = self {
             Ok(group)
         } else {
-            Err(client_error("Expect Group Target"))
+            Err(self.unwrap_error(ChannelKind::Group))
         }
     }
 
@@ -48,7 +84,7 @@ impl MessageChannel {
         if let MessageChannel::Friend(friend) = self {
             Ok(friend)
         } else {
-            Err(client_error("Expect Friend Target"))
+            Err(self.unwrap_error(ChannelKind::Friend))
         }
     }
 
@@ -57,7 +93,17 @@ impl MessageChannel {
         if let MessageChannel::Temp { qq, group } = self {
             Ok((qq, group))
         } else {
-            Err(client_error("Expect Temp Target"))
+            Err(self.unwrap_error(ChannelKind::Temp))
+        }
+    }
+
+    pub fn kind(&self) -> ChannelKind {
+        use ChannelKind::*;
+
+        match self {
+            MessageChannel::Friend(_) => Friend,
+            MessageChannel::Group(_) => Group,
+            MessageChannel::Temp { .. } => Temp,
         }
     }
 }
