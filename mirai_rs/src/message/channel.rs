@@ -22,9 +22,11 @@
 //! ```
 
 use crate::Target;
-use crate::error::{Result, Error, ErrorKind};
+use crate::error::{HttpResult};
 use crate::message::element::{GroupMember, Group, FriendMember};
 use serde::export::Formatter;
+
+pub type Result<O> = std::result::Result<O, UnwrapError>;
 
 #[derive(Debug)]
 pub struct UnwrapError {
@@ -49,7 +51,6 @@ impl std::fmt::Display for UnwrapError {
 
 impl std::error::Error for UnwrapError {}
 
-
 #[derive(Debug)]
 pub enum ChannelKind {
     Friend,
@@ -66,16 +67,12 @@ pub enum MessageChannel {
 }
 
 impl MessageChannel {
-    fn unwrap_error(self, kind: ChannelKind) -> Error {
-        Error::new(ErrorKind::Client, UnwrapError::new(kind, self))
-    }
-
     /// Return `Ok(group)` if this channel is [Group]
     pub fn group(self) -> Result<Target> {
         if let MessageChannel::Group(group) = self {
             Ok(group)
         } else {
-            Err(self.unwrap_error(ChannelKind::Group))
+            Err(UnwrapError::new(ChannelKind::Group, self))
         }
     }
 
@@ -84,7 +81,7 @@ impl MessageChannel {
         if let MessageChannel::Friend(friend) = self {
             Ok(friend)
         } else {
-            Err(self.unwrap_error(ChannelKind::Friend))
+            Err(UnwrapError::new(ChannelKind::Friend, self))
         }
     }
 
@@ -93,7 +90,7 @@ impl MessageChannel {
         if let MessageChannel::Temp { qq, group } = self {
             Ok((qq, group))
         } else {
-            Err(self.unwrap_error(ChannelKind::Temp))
+            Err(UnwrapError::new(ChannelKind::Temp, self))
         }
     }
 

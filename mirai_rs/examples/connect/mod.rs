@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use mirai::session::{MiraiConnection, Session};
 use std::time::Duration;
 use std::io::stdin;

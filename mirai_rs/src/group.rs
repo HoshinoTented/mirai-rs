@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 use crate::session::{Session, CommonResponse};
-use crate::error::{Result, assert};
+use crate::error::{HttpResult, assert};
 use crate::Target;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -26,7 +26,7 @@ pub struct MemberInfo {
 }
 
 impl Session {
-    async fn do_mute_all(&self, target: Target, mute: bool) -> Result<()> {
+    async fn do_mute_all(&self, target: Target, mute: bool) -> HttpResult<()> {
         let path = if mute { "muteAll" } else { "unmuteAll" };
 
         #[derive(Serialize)]
@@ -48,15 +48,15 @@ impl Session {
         assert(resp.code, if mute { "MuteAll" } else { "UnmuteAll" })
     }
 
-    pub async fn mute_all(&self, target: Target) -> Result<()> {
+    pub async fn mute_all(&self, target: Target) -> HttpResult<()> {
         self.do_mute_all(target, true).await
     }
 
-    pub async fn unmute_all(&self, target: Target) -> Result<()> {
+    pub async fn unmute_all(&self, target: Target) -> HttpResult<()> {
         self.do_mute_all(target, false).await
     }
 
-    pub async fn mute(&self, group_id: Target, target: Target, seconds: u32) -> Result<()> {
+    pub async fn mute(&self, group_id: Target, target: Target, seconds: u32) -> HttpResult<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -81,7 +81,7 @@ impl Session {
         assert(resp.code, "Mute")
     }
 
-    pub async fn unmute(&self, group_id: Target, target: Target) -> Result<()> {
+    pub async fn unmute(&self, group_id: Target, target: Target) -> HttpResult<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -104,7 +104,7 @@ impl Session {
         assert(resp.code, "Unmute")
     }
 
-    pub async fn kick(&self, group_id: Target, target: Target, msg: &str) -> Result<()> {
+    pub async fn kick(&self, group_id: Target, target: Target, msg: &str) -> HttpResult<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -129,7 +129,7 @@ impl Session {
         assert(resp.code, "Kick")
     }
 
-    pub async fn quit(&self, group_id: Target) -> Result<()> {
+    pub async fn quit(&self, group_id: Target) -> HttpResult<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -149,7 +149,7 @@ impl Session {
         assert(resp.code, "Quit")
     }
 
-    pub async fn modify_group_config(&self, group_id: Target, config: &GroupConfig) -> Result<()> {
+    pub async fn modify_group_config(&self, group_id: Target, config: &GroupConfig) -> HttpResult<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -171,7 +171,7 @@ impl Session {
         assert(resp.code, "ModifyGroupConfig")
     }
 
-    pub async fn get_group_config(&self, group_id: Target) -> Result<GroupConfig> {
+    pub async fn get_group_config(&self, group_id: Target) -> HttpResult<GroupConfig> {
         let config: GroupConfig = self.client().get(&self.url(&format!("/groupConfig?sessionKey={}&target={}", self.key, group_id)))
             .send().await?
             .json().await?;
@@ -179,7 +179,7 @@ impl Session {
         Ok(config)
     }
 
-    pub async fn modify_member_info(&self, group_id: Target, target: Target, info: &MemberInfo) -> Result<()> {
+    pub async fn modify_member_info(&self, group_id: Target, target: Target, info: &MemberInfo) -> HttpResult<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -204,7 +204,7 @@ impl Session {
         assert(resp.code, "ModifyGroupConfig")
     }
 
-    pub async fn get_member_info(&self, group_id: Target, target: Target) -> Result<MemberInfo> {
+    pub async fn get_member_info(&self, group_id: Target, target: Target) -> HttpResult<MemberInfo> {
         let info: MemberInfo = self.client().get(&self.url(&format!("/memberInfo?sessionKey={}&target={}&memberId={}", self.key, group_id, target)))
             .send().await?
             .json().await?;

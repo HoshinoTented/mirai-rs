@@ -2,8 +2,7 @@ mod connect;
 
 use connect::connect;
 
-use std::sync::{Arc, Mutex};
-use std::collections::vec_deque::VecDeque;
+use std::sync::{Arc};
 
 use tokio::sync::broadcast;
 use tokio::sync::broadcast::Sender;

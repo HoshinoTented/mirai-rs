@@ -31,7 +31,7 @@ pub mod send;
 pub mod receive;
 pub mod parse;
 
-use crate::error::Result;
+use crate::error::HttpResult;
 
 pub use channel::MessageChannel;
 pub use single::SingleMessage;
@@ -100,7 +100,7 @@ impl MessageBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Message> {
+    pub fn build(self) -> HttpResult<Message> {
         Ok(Message {
             quote: self.quote,
             message_chain: self.message_chain,

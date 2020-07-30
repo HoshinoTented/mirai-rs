@@ -24,7 +24,7 @@ use crate::message::{MessageID, TimeStamp, MessageChain};
 use crate::Target;
 
 #[serde(tag = "type")]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
 pub enum SingleMessage {
     Source {
         id: MessageID,

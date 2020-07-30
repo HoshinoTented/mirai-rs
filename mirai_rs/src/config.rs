@@ -10,7 +10,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::{assert, Result};
+use crate::error::{assert, HttpResult};
 use crate::session::{CommonResponse, Session};
 use crate::CacheSize;
 
@@ -23,7 +23,7 @@ pub struct Config {
 
 impl Session {
     /// Return config of mirai-api-http server.
-    pub async fn get_config(&self) -> Result<Config> {
+    pub async fn get_config(&self) -> HttpResult<Config> {
         let config: Config = self.client().get(&self.url(&format!("/config?sessionKey={}", self.key)))
             .send().await?
             .json().await?;
@@ -31,7 +31,7 @@ impl Session {
         Ok(config)
     }
     /// Return the result of modify mirai-api-http server.
-    pub async fn modify_config(&self, new_config: Config) -> Result<()> {
+    pub async fn modify_config(&self, new_config: Config) -> HttpResult<()> {
         #[serde(rename_all = "camelCase")]
         #[derive(Serialize)]
         struct Request {

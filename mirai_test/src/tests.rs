@@ -1,4 +1,5 @@
 #![cfg(test)]
+#![allow(dead_code)]
 
 use mirai::session::MiraiConnection;
 use reqwest::Client;
@@ -10,7 +11,7 @@ fn connection() -> MiraiConnection {
     MiraiConnection::new(&format!("http://{}:{}", HOST, PORT), Client::new())
 }
 
-#[tokio::test]
+// #[tokio::test]
 async fn about() {
     assert_eq!(About::response(), connection().about().await.unwrap());
 }

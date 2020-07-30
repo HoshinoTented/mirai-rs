@@ -1,102 +1,71 @@
-use reqwest::Error as ReqError;
+use std::error::{Error};
 
-use std::error::Error as StdError;
+use reqwest::Error as ReqError;
 
 use std::fmt::Formatter;
 
 use crate::Code;
 
-pub type Result<T> = std::result::Result<T, Error>;
-
-pub(crate) type BoxError = Box<dyn StdError + Send + Sync>;
+pub type HttpResult<T> = std::result::Result<T, HttpError>;
 
 #[derive(Debug)]
-pub struct Error {
-    inner: Box<Inner>
+pub enum HttpError {
+    Reqwest(ReqError),
+    StatusCode(StatusCodeError),
 }
 
-#[derive(Debug)]
-struct Inner {
-    kind: ErrorKind,
-    source: BoxError,
-}
-
-/// Server Error is an error from server, such as login failed or parsing server response failed.
-#[derive(Debug)]
-pub struct ServerError {
-    code: Code,
-    msg: String,
-}
-
-#[derive(Debug)]
-pub enum ErrorKind {
-    Server,
-    Client,
-}
-
-impl Error {
-    pub fn new<E>(kind: ErrorKind, source: E) -> Error
-        where E: Into<BoxError> {
-        Error {
-            inner: Box::new(Inner {
-                kind,
-                source: source.into(),
-            })
-        }
-    }
-
-    pub fn is_server(&self) -> bool {
-        match self.inner.kind {
-            ErrorKind::Server => true,
-            _ => false
-        }
-    }
-
-    pub fn is_client(&self) -> bool {
-        match self.inner.kind {
-            ErrorKind::Client => true,
-            _ => false
-        }
+impl From<ReqError> for HttpError {
+    fn from(e: ReqError) -> Self {
+        HttpError::Reqwest(e)
     }
 }
 
-impl ServerError {
-    pub fn new(code: Code, msg: String) -> Self {
-        ServerError {
-            code,
-            msg,
-        }
+impl From<StatusCodeError> for HttpError {
+    fn from(e: StatusCodeError) -> Self {
+        HttpError::StatusCode(e)
     }
 }
 
-impl std::fmt::Display for ServerError {
+impl std::fmt::Display for HttpError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("[{}] {}", self.code, self.msg))
+        match self {
+            HttpError::Reqwest(e) => { e.fmt(f) },
+            HttpError::StatusCode(e) => { e.fmt(f) },
+        }
     }
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        let msg = match self.inner.kind {
-            ErrorKind::Server => {
-                "Error occurred from server side:"
-            },
-            ErrorKind::Client => {
-                "Error occurred from client side:"
-            },
+impl Error for HttpError {}
+
+#[derive(Debug)]
+pub struct StatusCodeError {
+    code: Code,
+    action: String,
+}
+
+impl std::fmt::Display for StatusCodeError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let msg = match self.code {
+            SUCCESS => return Ok(()),
+            WRONG_AUTH_KEY => "Wrong auth key",
+            NO_SUCH_BOT => "No such bot",
+            WRONG_SESSION => "Wrong session",
+            UNAUTHORIZED => "Session wasn't authorized",
+            NO_SUCH_TARGET => "No such target",
+            NO_SUCH_FILE => "No such file",
+            PERMISSION_DENIED => "Bot permission denied",
+            MUTED => "Bot was muted",
+            MESSAGE_TOO_LONG => "Message is too long",
+            BAD_REQUEST => "Bad request",
+
+            _ => "Unknown code"
         };
 
-        f.write_str(&format!("{} {:?}", msg, self.inner.source))
+        f.write_str(&format!("[{}] {}", self.action, msg))
     }
 }
 
-impl StdError for Error {
-    fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        Some(self.inner.source.as_ref())
-    }
-}
-
-impl StdError for ServerError {}
+impl Error for StatusCodeError {}
 
 const SUCCESS: Code = 0;
 const WRONG_AUTH_KEY: Code = 1;
@@ -110,28 +79,9 @@ const MUTED: Code = 20;
 const MESSAGE_TOO_LONG: Code = 30;
 const BAD_REQUEST: Code = 400;
 
-pub(crate) fn assert(code: Code, action: &str) -> Result<()> {
-    let msg = match code {
-        SUCCESS => return Ok(()),
-        WRONG_AUTH_KEY => "Wrong auth key",
-        NO_SUCH_BOT => "No such bot",
-        WRONG_SESSION => "Wrong session",
-        UNAUTHORIZED => "Session wasn't authorized",
-        NO_SUCH_TARGET => "No such target",
-        NO_SUCH_FILE => "No such file",
-        PERMISSION_DENIED => "Bot permission denied",
-        MUTED => "Bot was muted",
-        MESSAGE_TOO_LONG => "Message is too long",
-        BAD_REQUEST => "Bad request",
-
-        _ => "Unknown code"
-    };
-
-    Err(Error::new(ErrorKind::Server, ServerError::new(code, format!("[{}] {}", action, msg))))
-}
-
-impl From<ReqError> for Error {
-    fn from(e: ReqError) -> Self {
-        Error::new(ErrorKind::Server, e)
-    }
+pub(crate) fn assert(code: Code, action: &str) -> HttpResult<()> {
+    Err(StatusCodeError {
+        code,
+        action: action.to_string(),
+    }.into())
 }

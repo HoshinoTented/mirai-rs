@@ -6,12 +6,12 @@ use crate::{Target, Code};
 use crate::message::{MessageID, MessageChain, Message};
 use crate::session::Session;
 use crate::message::channel::MessageChannel;
-use crate::error::{Result, assert};
+use crate::error::{HttpResult, assert};
 
 
 impl Session {
     /// Send a [message] to the given [channel], and returns a [MessageID]
-    pub async fn send_message(&self, channel: MessageChannel, message: &Message) -> Result<MessageID> {
+    pub async fn send_message(&self, channel: MessageChannel, message: &Message) -> HttpResult<MessageID> {
         #[serde(rename_all = "camelCase")]
         #[derive(Serialize)]
         struct Request<'mc> {

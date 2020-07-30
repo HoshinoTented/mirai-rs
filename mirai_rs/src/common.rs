@@ -2,11 +2,11 @@ use serde::Serialize;
 
 use crate::session::{Session, CommonResponse};
 use crate::message::MessageID;
-use crate::error::{Result, assert};
+use crate::error::{HttpResult, assert};
 
 /// Others
 impl Session {
-    pub async fn recall(&self, message_id: MessageID) -> Result<()> {
+    pub async fn recall(&self, message_id: MessageID) -> HttpResult<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]

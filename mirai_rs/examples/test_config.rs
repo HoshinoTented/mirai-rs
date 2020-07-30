@@ -1,7 +1,6 @@
 mod connect;
 
 use connect::{default_client, connect};
-use reqwest::{Client, Proxy};
 use mirai::config::Config;
 
 #[tokio::main]

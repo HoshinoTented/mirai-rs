@@ -1,5 +1,5 @@
 use crate::session::Session;
-use crate::error::Result;
+use crate::error::HttpResult;
 use crate::message::SingleMessage;
 
 use reqwest::multipart::{Form, Part};
@@ -44,7 +44,7 @@ impl From<Image> for SingleMessage {
 }
 
 impl Session {
-    pub async fn upload_image(&self, image_type: ImageType, bytes: Bytes, file_name: String) -> Result<Image> {
+    pub async fn upload_image(&self, image_type: ImageType, bytes: Bytes, file_name: String) -> HttpResult<Image> {
         let form = Form::new()
             .text("sessionKey", self.key.clone())
             .text("type", image_type.to_string())

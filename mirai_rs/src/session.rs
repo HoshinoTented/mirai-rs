@@ -39,11 +39,14 @@
 //! If not, the useless bot will continue to receive messages, this will bring **memory leak**.
 //!
 
-use reqwest::Client;
+#![allow(dead_code)]
+
+use reqwest::{Client, Response};
 use serde::{Deserialize, Serialize};
 
-use crate::error::{Result, assert};
+use crate::error::{HttpResult, assert};
 use crate::{Code, Target};
+use serde_json::Value;
 
 #[derive(Clone, Debug)]
 pub struct MiraiConnection {
@@ -137,7 +140,7 @@ impl MiraiConnection {
     }
 
     /// send a GET request in order to get the information of the mirai server.
-    pub async fn about(&self) -> Result<AboutResponse> {
+    pub async fn about(&self) -> HttpResult<AboutResponse> {
         let resp: AboutResponse = self.client.get(&self.url("/about"))
             .send().await?
             .json().await?;
@@ -145,7 +148,7 @@ impl MiraiConnection {
         Ok(resp)
     }
 
-    pub async fn auth(&self, auth_key: &str) -> Result<Session> {
+    pub async fn auth(&self, auth_key: &str) -> HttpResult<Session> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "authKey")]
@@ -174,7 +177,7 @@ impl MiraiConnection {
         })
     }
 
-    pub async fn run_command(&self, auth_key: &str, command: &str, args: &[&str]) -> Result<String> {
+    pub async fn run_command(&self, auth_key: &str, command: &str, args: &[&str]) -> HttpResult<String> {
         #[serde(rename_all = "camelCase")]
         #[derive(Serialize)]
         struct Request<'s> {
@@ -211,7 +214,7 @@ impl Session {
 
     /// Binding the session with the given QQ ID.
     /// Note that one session can only bind with one QQ ID.
-    pub async fn verify(&self, qq: Target) -> Result<()> {
+    pub async fn verify(&self, qq: Target) -> HttpResult<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
@@ -232,7 +235,7 @@ impl Session {
     }
 
     /// Release the QQ ID which this session bound before.
-    pub async fn release(&self, qq: Target) -> Result<()> {
+    pub async fn release(&self, qq: Target) -> HttpResult<()> {
         #[derive(Serialize)]
         struct Request {
             #[serde(rename = "sessionKey")]
