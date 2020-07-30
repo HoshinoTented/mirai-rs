@@ -42,17 +42,17 @@ pub type MessageChain = Vec<SingleMessage>;
 pub type MessageID = i64;
 pub type TimeStamp = u64;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Message {
     pub quote: Option<MessageID>,
     pub message_chain: MessageChain,
 }
 
 impl Message {
-    pub fn new(quote: Option<MessageID>, message_chain: &MessageChain) -> Message {
+    pub fn new<I: Into<MessageChain>>(quote: Option<MessageID>, message_chain: I) -> Message {
         Message {
             quote,
-            message_chain: message_chain.to_vec(),
+            message_chain: message_chain.into(),
         }
     }
 }
@@ -65,7 +65,7 @@ impl From<MessageBuilder> for Message {
 
 impl From<SingleMessage> for Message {
     fn from(single: SingleMessage) -> Self {
-        Message::new(None, &vec![single])
+        Message::new(None, [single])
     }
 }
 

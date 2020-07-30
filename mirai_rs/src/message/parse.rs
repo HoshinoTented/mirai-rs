@@ -1,9 +1,11 @@
-use crate::message::{MessageChain, SingleMessage};
+use crate::message::{MessageChain, SingleMessage, MessageID, Message};
 
 use regex::{Regex, Captures};
 
 use serde::export::{PhantomData, Formatter};
 use std::str::Chars;
+
+use lazy_static::lazy_static;
 
 pub trait MessageParser<O> {
     fn parse(self) -> std::result::Result<O, ParseError>;
@@ -88,6 +90,12 @@ pub struct StringMessageParser {
     source: String
 }
 
+type Iter<'a> = TextIterator<'a, Chars<'a>>;
+
+pub struct MetaData {
+    quote: MessageID
+}
+
 impl StringMessageParser {
     pub fn new<S: Into<String>>(source: S) -> StringMessageParser {
         StringMessageParser {
@@ -95,29 +103,52 @@ impl StringMessageParser {
         }
     }
 
-    /// This function should be called after a "{at:", and it will parse and eat chars which is not a '}' (but it also eat '}')
+    /// Parsing metadata which is in the start of the text.
+    ///
+    /// ## Example
+    /// ```ignore
+    /// let meta = r#"#[123:abc, 456:def]"#;
+    /// capture[0] = "#[123:abc, 456:def]";
+    /// capture[1] = "123:abc, 456:def";
+    /// capture[2] = "123:abc";     // which is meaningless
+    /// ```
+    pub fn parse_meta(it: &mut Iter) -> Result<MetaData> {
+        lazy_static! {
+            static ref META: String = String::from("[^:]+:[^,]+");
+            static ref META_RE: Regex = Regex::new(META.as_str()).unwrap();
+
+            static ref METAARG: String = format!("({meta},|{meta})*", meta = *META);
+            static ref METAS: String = format!("#[({metas})]", metas = *METAARG);
+
+            static ref METAS_RE: Regex = Regex::new(&format!("^({})?", *METAS)).unwrap();
+        }
+
+        todo!()
+    }
+
+    /// This function should be called after a "[at:", and it will parse and eat chars which is not a ']' (but it also eat ']')
     ///
     /// # Example
     /// ```rust
     /// use mirai::message::parse::{StringMessageParser, TextIterator};
     /// use mirai::message::SingleMessage;
     ///
-    /// let suc = "1005042620@hoshinokawaii}";
-    /// let fail = "qwq@123}";
+    /// let good = "1005042620@hoshinokawaii]";
+    /// let bad = "qwq@123]";
     ///
     /// assert_eq!(Some(SingleMessage::At {
     ///     target: 1005042620,
     ///     display: "hoshinokawaii".to_string()
-    /// }), StringMessageParser::parse_at(&mut TextIterator::new(suc.chars())).ok());
+    /// }), StringMessageParser::parse_at(&mut TextIterator::new(good.chars())).ok());
     ///
-    /// assert_eq!(None, StringMessageParser::parse_at(&mut TextIterator::new(fail.chars())).ok());
+    /// assert_eq!(None, StringMessageParser::parse_at(&mut TextIterator::new(bad.chars())).ok());
     /// ```
-    pub fn parse_at(it: &mut TextIterator<Chars>) -> Result<SingleMessage> {
-        lazy_static::lazy_static! {
+    pub fn parse_at(it: &mut Iter) -> Result<SingleMessage> {
+        lazy_static! {
             static ref R: Regex = Regex::new(r"^(\d+)@(.*)$").unwrap();
         }
 
-        let inside: String = it.by_ref().take_while(|char| *char != '}').collect();
+        let inside: String = it.by_ref().take_while(|char| *char != ']').collect();
         let cpt: Option<Captures> = R.captures(&inside);
 
         match cpt {
@@ -138,19 +169,24 @@ impl StringMessageParser {
     }
 }
 
-impl MessageParser<MessageChain> for StringMessageParser {
+impl MessageParser<Message> for StringMessageParser {
     /// Parse a string message with the following format:
     /// ```ignore
-    /// CHAR := [^{}];
+    /// ESCAPE := '\\' .?;           # parser will parse '\x' as a raw character 'x', even though it is not a special character or is a `EOF`
+    /// CHAR := [^{}] | ESCAPE;
     /// EOL := '\n';
     ///
     /// STRING := CHAR *;
     ///
     /// TARGET := \d+
     ///
+    /// QUOTE :=
+    ///
+    /// SINGLE_META :=
+    ///
     /// AT := ('at' | 'AT') ':' TARGET '@' STRING;
     ///
-    /// COMPONENT := '{' (AT) '}';
+    /// COMPONENT := '[' (AT) ']';
     /// ```
     ///
     /// ## Example
@@ -159,25 +195,30 @@ impl MessageParser<MessageChain> for StringMessageParser {
     /// use mirai::message::parse::{StringMessageParser, MessageParser, parse_msg};
     /// use mirai::message::SingleMessage;
     ///
-    /// let msg = r#"{at:1005042620@hoshino} Hello, world!"#;
+    /// let msg = r#"[at:1005042620@hoshino] Hello, world!"#;
     /// let parser = parse_msg(msg.to_string());
     ///
-    /// assert_eq!(Some(vec![SingleMessage::At { target: 1005042620, display: String::from("hoshino") }, " Hello, world!".into()]), parser.parse().ok());
+    /// assert_eq!(Some(vec![SingleMessage::At { target: 1005042620, display: String::from("hoshino") }, " Hello, world!".into()]), parser.parse().ok().map(|it| it.message_chain));
     ///
-    /// let msg = r#"}"#;
+    /// let msg = r#"]"#;
     /// let parser = parse_msg(msg.to_string());
     ///
     /// assert_eq!(None, parser.parse().ok());
+    ///
+    /// let msg = r#"\[at:1005042620@hoshino\] Hello, world!"#;
+    /// let parser = parse_msg(msg.to_string());
+    ///
+    /// assert_eq!(Some(vec!["[at:1005042620@hoshino] Hello, world!".into()]), parser.parse().ok().map(|it| it.message_chain));
     /// ```
-    fn parse(self) -> Result<MessageChain> {
+    fn parse(self) -> Result<Message> {
         let mut chain: Vec<SingleMessage> = Vec::new();
 
-        let mut cs = TextIterator::new(self.source.chars());
+        let mut cs: Iter = TextIterator::new(self.source.chars());
         let mut tmp = String::new();
 
         while let Some(char) = cs.next() {
             match char {
-                '{' => {
+                '[' => {
                     if !tmp.is_empty() {
                         chain.push(tmp.into());
                         tmp = String::new();
@@ -196,8 +237,14 @@ impl MessageParser<MessageChain> for StringMessageParser {
                     chain.push(component);
                 }
 
-                '}' => {
-                    return Err(cs.occur_error("Unexpected '}'".to_string()));
+                ']' => {
+                    return Err(cs.occur_error("Unexpected ']'".to_string()));
+                }
+
+                '\\' => {
+                    if let Some(raw) = cs.next() {
+                        tmp.push(raw);
+                    }
                 }
 
                 otherwise => {
@@ -210,7 +257,7 @@ impl MessageParser<MessageChain> for StringMessageParser {
             chain.push(tmp.into());
         }
 
-        Ok(chain)
+        Ok(Message::new(None, chain))
     }
 }
 

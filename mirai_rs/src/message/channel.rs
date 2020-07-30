@@ -59,6 +59,20 @@ pub enum ChannelKind {
 }
 
 /// Mirai-api-http provides three channel to send message, [Friend], [Group] and [Temp].
+///
+/// ## Example
+/// ```rust
+/// use mirai::message::MessageChannel;
+///
+/// let group = MessageChannel::Group(123);
+/// assert_eq!(Some(123), group.group().ok());
+///
+/// let friend = MessageChannel::Friend(456);
+/// assert_eq!(Some(456), friend.friend().ok());
+///
+/// let tmp = MessageChannel::Temp { qq: 456, group: 123 };
+/// assert_eq!(Some((456, 123)), tmp.temp().ok());
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub enum MessageChannel {
     Friend(Target),
@@ -68,6 +82,7 @@ pub enum MessageChannel {
 
 impl MessageChannel {
     /// Return `Ok(group)` if this channel is [Group]
+
     pub fn group(self) -> Result<Target> {
         if let MessageChannel::Group(group) = self {
             Ok(group)
@@ -75,8 +90,6 @@ impl MessageChannel {
             Err(UnwrapError::new(ChannelKind::Group, self))
         }
     }
-
-    /// Return `Ok(QQ)` if this channel is [Friend]
     pub fn friend(self) -> Result<Target> {
         if let MessageChannel::Friend(friend) = self {
             Ok(friend)

@@ -41,12 +41,11 @@
 
 #![allow(dead_code)]
 
-use reqwest::{Client, Response};
+use reqwest::{Client};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{HttpResult, assert};
 use crate::{Code, Target};
-use serde_json::Value;
 
 #[derive(Clone, Debug)]
 pub struct MiraiConnection {
