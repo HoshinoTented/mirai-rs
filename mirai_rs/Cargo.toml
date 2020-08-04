@@ -1,6 +1,6 @@
 [package]
 name = "mirai_rs"
-license = "GPL-3.0"
+license = "AGPL-3.0"
 version = "0.1.2"
 authors = ["HoshinoTented <limbolrain@gmail.com>"]
 edition = "2018"
@@ -25,3 +25,10 @@ lazy_static = "1.4"
 [lib]
 name = "mirai"
 path = "src/lib.rs"
+
+[[example]]
+name = "parse_msg"
+required-features = ["parser"]
+
+[features]
+parser = []

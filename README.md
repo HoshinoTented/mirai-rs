@@ -7,9 +7,11 @@ A mirai-client implemented in Rust.
 
 -------------
 
+[简体中文](/README-CH_ZN.md)
+
 ## Usage
 
-Add following code in your `Cargo.toml`.
+Add following code in your `Cargo.toml`:
 
 ```toml
 mirai_rs = "0.1.1"
@@ -19,7 +21,7 @@ The newest version is: [![crates](https://img.shields.io/crates/v/mirai_rs)](htt
 
 The mirai-api-http version which current supports: `1.7.1`
 
-mirai_rs is still unstable, so we recommend you use the newest version that avoid some bugs ~~(and get more new bugs)~~.
+mirai_rs is still unstable, and it is possible to make **breaking changes**. So we recommend you use the newest version to avoid some bugs ~~(and get more new bugs)~~.
 
 ## More information
 
