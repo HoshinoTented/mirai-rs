@@ -3,7 +3,7 @@
 [![CircleCI](https://circleci.com/gh/HoshinoTented/mirai-rs.svg?style=svg)](https://circleci.com/gh/HoshinoTented/mirai-rs)
 [![crates](https://img.shields.io/crates/v/mirai_rs)](https://crates.io/crates/mirai_rs)
 
-一个使用 Rust 实现的 Mira 客户端
+一个使用 Rust 实现的 Mirai 客户端
 
 -------------
 

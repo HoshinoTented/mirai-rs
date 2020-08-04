@@ -22,6 +22,8 @@ use serde::{Serialize, Deserialize};
 
 use crate::message::{MessageID, TimeStamp, MessageChain};
 use crate::Target;
+use serde::export::fmt::Display;
+use serde::export::Formatter;
 
 #[serde(tag = "type")]
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
@@ -94,21 +96,21 @@ impl From<&str> for SingleMessage {
     }
 }
 
-impl ToString for SingleMessage {
-    fn to_string(&self) -> String {
-        match self {
-            SingleMessage::Source { id, time: _ } => format!("[mirai:source:{}]", id),
+impl Display for SingleMessage {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            SingleMessage::Source { id, time: _ } => format!("[source:{}]", id),
             SingleMessage::Plain { text } => text.clone(),
             SingleMessage::Quote { id, group_id: _, sender_id: _, target_id: _, origin: _ } => format!("[mirai:quote:{}]", id),
-            SingleMessage::At { target, display: _ } => format!("[mirai:at:{}]", target),
-            SingleMessage::Image { .. } => "[Image]".to_string(),
-            SingleMessage::FlashImage { .. } => "[FlashImage]".to_string(),
-            SingleMessage::Xml { xml } => format!("[mirai:xml:{}]", xml),
-            SingleMessage::Json { json } => format!("[mirai:json:{}]", json),
-            SingleMessage::App { content } => format!("[mirai:app:{}]", content),
-            SingleMessage::Poke { name } => format!("[mirai:poke:{}]", name),
+            SingleMessage::At { target, display } => format!("[at:{}@{}]", target, display),
+            SingleMessage::Image { .. } => "[image]".to_string(),
+            SingleMessage::FlashImage { .. } => "[flash_image]".to_string(),
+            SingleMessage::Xml { xml } => format!("[xml:{}]", xml),
+            SingleMessage::Json { json } => format!("[json:{}]", json),
+            SingleMessage::App { content } => format!("[app:{}]", content),
+            SingleMessage::Poke { name } => format!("[poke:{}]", name),
             SingleMessage::Unsupported => format!("{:?}", SingleMessage::Unsupported),
-            SingleMessage::AtAll => "[mirai:atall]".to_string(),
+            SingleMessage::AtAll => "[atall]".to_string(),
             SingleMessage::Face { face_id, name } => {
                 let s = if let Some(id) = face_id {
                     id.to_string()
@@ -118,8 +120,10 @@ impl ToString for SingleMessage {
                     panic!("id == None && name == None");
                 };
 
-                format!("[mirai:face:{}]", s)
+                format!("[ce:{}]", s)
             }
-        }
+        };
+
+        f.write_str(&s)
     }
 }

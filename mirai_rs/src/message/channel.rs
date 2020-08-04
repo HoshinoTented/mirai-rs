@@ -22,7 +22,6 @@
 //! ```
 
 use crate::Target;
-use crate::error::{HttpResult};
 use crate::message::element::{GroupMember, Group, FriendMember};
 use serde::export::Formatter;
 
@@ -82,7 +81,6 @@ pub enum MessageChannel {
 
 impl MessageChannel {
     /// Return `Ok(group)` if this channel is [Group]
-
     pub fn group(self) -> Result<Target> {
         if let MessageChannel::Group(group) = self {
             Ok(group)
@@ -90,6 +88,7 @@ impl MessageChannel {
             Err(UnwrapError::new(ChannelKind::Group, self))
         }
     }
+
     pub fn friend(self) -> Result<Target> {
         if let MessageChannel::Friend(friend) = self {
             Ok(friend)
