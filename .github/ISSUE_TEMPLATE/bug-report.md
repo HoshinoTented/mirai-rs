@@ -10,8 +10,8 @@ assignees: ''
 <!--
 Please replace the default value according to your environment information
 -->
-* The rust version you currently used: 1.47.0
-* The mirai-rs version with bugs: 0.1.1
+* rust version: 1.47.0
+* mirai-rs version: 0.1.1
 * Your code: 
 <!--
 ⚠WARNING: The code must be quoted by three '`'! Otherwise, your issue will be DELETED.>
