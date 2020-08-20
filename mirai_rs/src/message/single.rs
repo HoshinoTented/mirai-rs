@@ -4,9 +4,7 @@
 //!
 //! [`SingleMessage`] is the element of [`MessageChain`], it has many variants:
 //!
-//! * Source: It contains a message-id and timestamp, but in common you don't need to use it, it only returns from the server.
 //! * Plain: It contains plain text, [`Plain`] message is common, and most frequently uses.
-//! * Quote: It is similar to [`Source`] variant, only returns from the server. It means this message quoted another message.
 //! * At: You can use [`At`] variant when you want this message notice somebody, the [`display`] property is how this [`At`] message displays.
 //! * AtAll: This message can only be received from a group.
 //! * Face: A face (aka expression) message element, if you want to construct it, you need provide at least one of [face_id] or [name].
@@ -20,28 +18,15 @@
 
 use serde::{Serialize, Deserialize};
 
-use crate::message::{MessageID, TimeStamp, MessageChain};
 use crate::Target;
 use serde::export::fmt::Display;
 use serde::export::Formatter;
 
 #[serde(tag = "type")]
-#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum SingleMessage {
-    Source {
-        id: MessageID,
-        time: TimeStamp,
-    },
     Plain {
         text: String
-    },
-    #[serde(rename_all = "camelCase")]
-    Quote {
-        id: MessageID,
-        group_id: Target,
-        sender_id: Target,
-        target_id: Target,
-        origin: MessageChain,
     },
     At {
         target: Target,
@@ -82,26 +67,18 @@ pub enum SingleMessage {
     Unsupported,
 }
 
-impl From<String> for SingleMessage {
-    fn from(str: String) -> Self {
+impl<S: AsRef<str>> From<S> for SingleMessage {
+    fn from(str: S) -> Self {
         SingleMessage::Plain {
-            text: str
+            text: str.as_ref().to_string()
         }
-    }
-}
-
-impl From<&str> for SingleMessage {
-    fn from(str: &str) -> Self {
-        SingleMessage::from(str.to_string())
     }
 }
 
 impl Display for SingleMessage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            SingleMessage::Source { id, time: _ } => format!("[source:{}]", id),
             SingleMessage::Plain { text } => text.clone(),
-            SingleMessage::Quote { id, group_id: _, sender_id: _, target_id: _, origin: _ } => format!("[mirai:quote:{}]", id),
             SingleMessage::At { target, display } => format!("[at:{}@{}]", target, display),
             SingleMessage::Image { .. } => "[image]".to_string(),
             SingleMessage::FlashImage { .. } => "[flash_image]".to_string(),

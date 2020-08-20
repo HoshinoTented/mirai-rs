@@ -1,0 +1,34 @@
+RawChar = _{
+    !(
+        "[" | "]" | "{" | "}" | ":"
+    ) ~ ANY
+}
+
+Escape = _{ "[[" | "]]" | "{{" | "}}" }
+
+Char = _{ Escape | RawChar }
+
+String = @{ Char+ }
+
+Number = @{ !"0" ~ DECIMAL_NUMBER ~ DECIMAL_NUMBER* }
+
+Index = { Number | String }
+
+place_holder = ${ "{" ~ Index? ~ "}" }
+
+inner = ${ String ~ ":" ~ String }
+
+raw_component = ${ "[" ~ inner ~ "]" }
+component = { raw_component | place_holder }
+
+meta = ${ "#" ~ component }
+meta_line = ${ meta ~ NEWLINE }
+
+single_content = { String | component }
+
+template = ${
+      SOI
+    ~ meta_line*
+    ~ single_content*
+    ~ EOI
+}

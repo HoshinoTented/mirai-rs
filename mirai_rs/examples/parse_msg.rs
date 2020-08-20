@@ -5,7 +5,6 @@ use mirai::message::EventPacket;
 use mirai::message::element::Reply;
 use mirai::message::event::MessageEvent;
 use mirai::message::channel::AsGroupChannel;
-// use mirai::message::parse::parse_msg;
 
 #[tokio::main]
 async fn main() {

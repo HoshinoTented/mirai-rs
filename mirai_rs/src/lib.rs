@@ -8,6 +8,9 @@
 //!
 //! Have a good time!
 
+#[macro_use]
+extern crate pest_derive;
+
 pub mod common;
 pub mod config;
 pub mod error;

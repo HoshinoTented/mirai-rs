@@ -4,9 +4,9 @@ use std::sync::{mpsc, Arc};
 use std::time::Duration;
 
 use mirai::message::event::{EventPacket, MessageEvent};
-use mirai::message::single::SingleMessage;
+use mirai::message::single::{SingleMessage};
 use mirai::message::channel::{AsGroupChannel, AsTempChannel};
-use mirai::message::MessageBuilder;
+use mirai::message::{MessageBuilder, Message};
 use mirai::message::element::Permission;
 
 use connect::connect;
@@ -56,7 +56,7 @@ async fn main() {
             match msg.trim() {
                 "Hello" => {
                     session.send_message(sender.group().as_group_channel(), &MessageBuilder::new()
-                        .append_message(SingleMessage::Image { image_id: None, url: None, path: Some("nya.png".to_string()) })
+                        .append_message(SingleMessage::Image { image_id: None, url: None, path: Some("nya.png".to_string()) }.into())
                         .build().unwrap(),
                     ).await.unwrap();
                 }
@@ -65,9 +65,7 @@ async fn main() {
                     if let Permission::Administrator | Permission::Owner = sender.group().permission() {
                         if let Permission::Administrator | Permission::Owner = sender.permission() {
                             session.send_message(sender.group().as_group_channel(),
-                                                 &MessageBuilder::new()
-                                                     .append_message("You are too powerful to mute.".into())
-                                                     .build().unwrap(),
+                                                 &Message::new(["You are too powerful to mute.".into()]),
                             ).await.unwrap();
                         } else {
                             session.mute(sender.group().id(), sender.id(), 60 * 10).await.unwrap();
@@ -83,18 +81,14 @@ async fn main() {
                         }
                     } else {
                         session.send_message(sender.group().as_group_channel(),
-                                             &MessageBuilder::new()
-                                                 .append_message("I have not enough permission QAQ.".into())
-                                                 .build().unwrap(),
+                                             &Message::new(["I have not enough permission QAQ.".into()]),
                         ).await.unwrap();
                     }
                 }
 
                 "talk with me" => {
                     session.send_message(sender.as_temp_channel(),
-                                         &MessageBuilder::new()
-                                             .append_message("Hello".into())
-                                             .build().unwrap(),
+                                         &Message::new(["Hello".into()]),
                     ).await.unwrap();
                 }
                 _ => {}
