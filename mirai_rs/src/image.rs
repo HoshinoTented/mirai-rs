@@ -1,6 +1,6 @@
 use crate::session::Session;
 use crate::error::HttpResult;
-use crate::message::SingleMessage;
+use crate::message::MessageContent;
 
 use reqwest::multipart::{Form, Part};
 use reqwest::Body;
@@ -33,9 +33,9 @@ impl ToString for ImageType {
     }
 }
 
-impl From<Image> for SingleMessage {
+impl From<Image> for MessageContent {
     fn from(img: Image) -> Self {
-        SingleMessage::Image {
+        MessageContent::Image {
             image_id: Some(img.image_id),
             url: Some(img.url),
             path: Some(img.path),
