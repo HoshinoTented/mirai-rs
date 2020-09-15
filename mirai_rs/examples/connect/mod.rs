@@ -9,7 +9,7 @@ pub async fn connect_server(client: Client) -> MiraiConnection {
     let connection = MiraiConnection::new("http://localhost:8080", client);
 
     loop {
-        println!("Try to connecting to server: {}", connection.base_url);
+        println!("Try to connecting to server: {}", connection.base_url());
 
         match connection.about().await {
             Err(e) => {
@@ -34,12 +34,12 @@ pub async fn authorize(connection: MiraiConnection) -> Session {
     stdin().read_line(&mut auth_key).unwrap();
 
     let session = connection.auth(auth_key.trim()).await.unwrap();
-    println!("Authorizing Successful.");
+    println!("Authorization Successful.");
 
     session
 }
 
-pub async fn verifying(session: &Session) {
+pub async fn verifying(session: &mut Session) {
     let mut id = String::new();
 
     println!("Please input qq id: ");
@@ -51,9 +51,9 @@ pub async fn verifying(session: &Session) {
 
 pub async fn connect(client: Client) -> Session {
     let connection = connect_server(client).await;
-    let session = authorize(connection).await;
+    let mut session = authorize(connection).await;
 
-    verifying(&session).await;
+    verifying(&mut session).await;
 
     session
 }

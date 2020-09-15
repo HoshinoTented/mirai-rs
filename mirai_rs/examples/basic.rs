@@ -4,9 +4,9 @@ use std::sync::{mpsc, Arc};
 use std::time::Duration;
 
 use mirai::message::event::{EventPacket, MessageEvent};
-use mirai::message::single::{SingleMessage};
+use mirai::message::content::{MessageContent};
 use mirai::message::channel::{AsGroupChannel, AsTempChannel};
-use mirai::message::{MessageBuilder, Message};
+use mirai::message::{Message};
 use mirai::message::element::Permission;
 
 use connect::connect;
@@ -37,16 +37,13 @@ async fn main() {
         });
     }
 
-    println!("{:?}", session.friend_list().await);
-    println!("{:?}", session.group_list().await);
-
     for mp in rc.iter() {
         if let EventPacket::MessageEvent(MessageEvent::GroupMessage {
                                              message_chain,
                                              sender
                                          }) = &mp {
             let msg = message_chain.iter().fold(String::new(), |msg, elem| {
-                if let SingleMessage::Plain { text } = elem {
+                if let MessageContent::Plain { text } = elem {
                     msg + text
                 } else {
                     msg
@@ -55,42 +52,9 @@ async fn main() {
 
             match msg.trim() {
                 "Hello" => {
-                    session.send_message(sender.group().as_group_channel(), &MessageBuilder::new()
-                        .append_message(SingleMessage::Image { image_id: None, url: None, path: Some("nya.png".to_string()) }.into())
-                        .build().unwrap(),
-                    ).await.unwrap();
+                    session.send_message(sender.group().as_group_channel(), &Message::new(vec!["qwq".into()])).await.unwrap();
                 }
 
-                "mute me" => {
-                    if let Permission::Administrator | Permission::Owner = sender.group().permission() {
-                        if let Permission::Administrator | Permission::Owner = sender.permission() {
-                            session.send_message(sender.group().as_group_channel(),
-                                                 &Message::new(["You are too powerful to mute.".into()]),
-                            ).await.unwrap();
-                        } else {
-                            session.mute(sender.group().id(), sender.id(), 60 * 10).await.unwrap();
-
-                            {
-                                let session = session.clone();
-                                let sender = sender.clone();
-                                tokio::spawn(async move {
-                                    std::thread::sleep(Duration::from_secs(10));
-                                    session.unmute(sender.group().id(), sender.id()).await.unwrap();
-                                });
-                            }
-                        }
-                    } else {
-                        session.send_message(sender.group().as_group_channel(),
-                                             &Message::new(["I have not enough permission QAQ.".into()]),
-                        ).await.unwrap();
-                    }
-                }
-
-                "talk with me" => {
-                    session.send_message(sender.as_temp_channel(),
-                                         &Message::new(["Hello".into()]),
-                    ).await.unwrap();
-                }
                 _ => {}
             };
         }

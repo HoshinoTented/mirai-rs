@@ -80,8 +80,12 @@ const MESSAGE_TOO_LONG: Code = 30;
 const BAD_REQUEST: Code = 400;
 
 pub(crate) fn assert(code: Code, action: &str) -> HttpResult<()> {
-    Err(StatusCodeError {
-        code,
-        action: action.to_string(),
-    }.into())
+    if code == SUCCESS {
+        Ok(())
+    } else {
+        Err(StatusCodeError {
+            code,
+            action: action.to_string(),
+        }.into())
+    }
 }
