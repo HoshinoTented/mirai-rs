@@ -1,8 +1,8 @@
-//! Single Message is the element of MessageChain, when you want to send a message, you need to construct them.
+//! MessageContent is the primary element of Message Chain.
 //!
-//! # SingleMessage
+//! # MessageContent
 //!
-//! [`SingleMessage`] is the element of [`MessageChain`], it has many variants:
+//! [`MessageContent`] is the element of [`MessageChain`], it has many variants:
 //!
 //! * Plain: It contains plain text, [`Plain`] message is common, and most frequently uses.
 //! * At: You can use [`At`] variant when you want this message notice somebody, the [`display`] property is how this [`At`] message displays.
@@ -24,7 +24,7 @@ use serde::export::Formatter;
 
 #[serde(tag = "type")]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
-pub enum SingleMessage {
+pub enum MessageContent {
     Plain {
         text: String
     },
@@ -67,28 +67,28 @@ pub enum SingleMessage {
     Unsupported,
 }
 
-impl<S: AsRef<str>> From<S> for SingleMessage {
+impl<S: AsRef<str>> From<S> for MessageContent {
     fn from(str: S) -> Self {
-        SingleMessage::Plain {
+        MessageContent::Plain {
             text: str.as_ref().to_string()
         }
     }
 }
 
-impl Display for SingleMessage {
+impl Display for MessageContent {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            SingleMessage::Plain { text } => text.clone(),
-            SingleMessage::At { target, display } => format!("[at:{}@{}]", target, display),
-            SingleMessage::Image { .. } => "[image]".to_string(),
-            SingleMessage::FlashImage { .. } => "[flash_image]".to_string(),
-            SingleMessage::Xml { xml } => format!("[xml:{}]", xml),
-            SingleMessage::Json { json } => format!("[json:{}]", json),
-            SingleMessage::App { content } => format!("[app:{}]", content),
-            SingleMessage::Poke { name } => format!("[poke:{}]", name),
-            SingleMessage::Unsupported => format!("{:?}", SingleMessage::Unsupported),
-            SingleMessage::AtAll => "[atall]".to_string(),
-            SingleMessage::Face { face_id, name } => {
+            MessageContent::Plain { text } => text.clone(),
+            MessageContent::At { target, display } => format!("[at:{}@{}]", target, display),
+            MessageContent::Image { .. } => "[image]".to_string(),
+            MessageContent::FlashImage { .. } => "[flash_image]".to_string(),
+            MessageContent::Xml { xml } => format!("[xml:{}]", xml),
+            MessageContent::Json { json } => format!("[json:{}]", json),
+            MessageContent::App { content } => format!("[app:{}]", content),
+            MessageContent::Poke { name } => format!("[poke:{}]", name),
+            MessageContent::Unsupported => format!("{:?}", MessageContent::Unsupported),
+            MessageContent::AtAll => "[atall]".to_string(),
+            MessageContent::Face { face_id, name } => {
                 let s = if let Some(id) = face_id {
                     id.to_string()
                 } else if let Some(name) = name {

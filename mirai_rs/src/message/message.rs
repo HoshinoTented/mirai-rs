@@ -1,17 +1,35 @@
-use crate::message::SingleMessage;
+use crate::message::MessageContent;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Visitor, SeqAccess};
-use nom::lib::std::fmt::Formatter;
+use std::fmt::Formatter;
 use serde::ser::SerializeSeq;
+use crate::message::meta_msg::{MessageSource, MessageMeta};
 
-pub type MessageChain = Vec<SingleMessage>;
+pub type MessageChain = Vec<MessageContent>;
 pub type MessageID = i64;
 pub type TimeStamp = u64;
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct MessageSource {
-    id: MessageID,
-    time: TimeStamp,
+#[serde(untagged)]
+#[derive(Deserialize, Serialize)]
+pub enum SingleMessage {
+    Meta(MessageMeta),
+    Content(MessageContent),
+}
+
+impl SingleMessage {
+    pub fn is_meta(&self) -> bool {
+        match self {
+            SingleMessage::Meta(_) => true,
+            _ => false
+        }
+    }
+
+    pub fn is_content(&self) -> bool {
+        match self {
+            SingleMessage::Content(_) => true,
+            _ => false
+        }
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -37,7 +55,6 @@ impl Message {
         self.quote = Some(quote);
     }
 
-
     pub fn source(&self) -> &MessageSource {
         &self.source
     }
@@ -51,27 +68,12 @@ impl Message {
     }
 }
 
-impl From<SingleMessage> for Message {
-    fn from(single: SingleMessage) -> Self {
+impl From<MessageContent> for Message {
+    fn from(single: MessageContent) -> Self {
         Message::new([single])
     }
 }
 
-#[serde(tag = "type")]
-#[derive(Debug, Deserialize, Serialize)]
-enum MessageMeta {
-    Source(MessageSource),
-    Quote {
-        id: MessageID
-    },
-}
-
-#[serde(untagged)]
-#[derive(Deserialize, Serialize)]
-enum MessageComponent {
-    Meta(MessageMeta),
-    Single(SingleMessage),
-}
 
 impl<'de> Deserialize<'de> for Message {
     fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error> where
@@ -82,7 +84,7 @@ impl<'de> Deserialize<'de> for Message {
             type Value = Message;
 
             fn expecting(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-                write!(formatter, "Message is expecting a map")
+                write!(formatter, "Message is expecting a sequence")
             }
 
             fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, <A as SeqAccess<'v>>::Error> where
@@ -91,9 +93,9 @@ impl<'de> Deserialize<'de> for Message {
                 let mut quote = None;
                 let mut chain = Vec::new();
 
-                while let Some(next) = seq.next_element::<MessageComponent>()? {
+                while let Some(next) = seq.next_element::<SingleMessage>()? {
                     match next {
-                        MessageComponent::Meta(meta) => {
+                        SingleMessage::Meta(meta) => {
                             match meta {
                                 MessageMeta::Source(ms) => {
                                     source = Some(ms);
@@ -103,7 +105,7 @@ impl<'de> Deserialize<'de> for Message {
                                 }
                             }
                         }
-                        MessageComponent::Single(single) => {
+                        SingleMessage::Content(single) => {
                             chain.push(single);
                         }
                     }
@@ -129,15 +131,15 @@ impl Serialize for Message {
         let len = 1 + self.message_chain.len() + self.quote.is_some() as usize;
         let mut seq = serializer.serialize_seq(Some(len))?;
 
-        seq.serialize_element(&Some(MessageComponent::Meta(MessageMeta::Source(self.source.clone()))))?;
+        seq.serialize_element(&Some(SingleMessage::Meta(MessageMeta::Source(self.source.clone()))))?;
 
         if let Some(quote) = self.quote {
-            let quote = MessageComponent::Meta(MessageMeta::Quote { id: quote });
+            let quote = SingleMessage::Meta(MessageMeta::Quote { id: quote });
             seq.serialize_element(&Some(quote))?;
         }
 
         for single in self.message_chain.clone().into_iter() {
-            seq.serialize_element(&MessageComponent::Single(single))?;
+            seq.serialize_element(&SingleMessage::Content(single))?;
         }
 
         seq.end()
@@ -147,7 +149,7 @@ impl Serialize for Message {
 #[cfg(test)]
 mod tests {
     use serde_json::*;
-    use crate::message::{Message, SingleMessage};
+    use crate::message::{Message, MessageContent};
     use crate::message::message::MessageSource;
 
     #[test]
@@ -180,7 +182,7 @@ mod tests {
             },
             quote: Some(19260817),
             message_chain: vec![
-                SingleMessage::At {
+                MessageContent::At {
                     target: 1005042620,
                     display: "世界第一可爱星野酱".to_string(),
                 },

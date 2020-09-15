@@ -2,7 +2,7 @@ mod connect;
 
 use connect::connect;
 use mirai::image::{ImageType};
-use mirai::message::{SingleMessage};
+use mirai::message::{MessageContent};
 use mirai::message::channel::AsGroupChannel;
 use reqwest::{Client};
 
@@ -19,5 +19,5 @@ async fn main() {
 
     println!("Uploaded.");
 
-    session.send_message(GROUP.as_group_channel(), &SingleMessage::from(img).into()).await.unwrap();
+    session.send_message(GROUP.as_group_channel(), &MessageContent::from(img).into()).await.unwrap();
 }

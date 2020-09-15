@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use crate::Target;
-use crate::message::SingleMessage;
+use crate::message::MessageContent;
 
 #[derive(Deserialize, Debug, Clone)]
 pub enum Permission {
@@ -117,12 +117,12 @@ impl Group {
 }
 
 pub trait Reply {
-    fn at(&self) -> SingleMessage;
+    fn at(&self) -> MessageContent;
 }
 
 impl Reply for GroupMember {
-    fn at(&self) -> SingleMessage {
-        SingleMessage::At {
+    fn at(&self) -> MessageContent {
+        MessageContent::At {
             target: self.id,
             display: self.member_name.clone(),
         }
