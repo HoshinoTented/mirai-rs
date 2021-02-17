@@ -23,7 +23,7 @@
 
 use crate::Target;
 use crate::message::element::{GroupMember, Group, FriendMember};
-use serde::export::Formatter;
+use std::fmt::Formatter;
 
 pub type Result<O> = std::result::Result<O, UnwrapError>;
 
