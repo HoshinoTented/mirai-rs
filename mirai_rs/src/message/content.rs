@@ -19,8 +19,7 @@
 use serde::{Serialize, Deserialize};
 
 use crate::Target;
-use serde::export::fmt::Display;
-use serde::export::Formatter;
+use std::fmt::{Display, Formatter};
 
 #[serde(tag = "type")]
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
